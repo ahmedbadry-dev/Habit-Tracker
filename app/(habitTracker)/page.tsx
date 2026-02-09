@@ -6,7 +6,7 @@ import { Calendar, Check, Clock, Flame, MoreVertical, Plus, TrendingUp, TrophyIc
 
 const page = () => {
   return (
-    <div className='p-4 md:p-4 space-y-4'>
+    <div className='p-4 space-y-4'>
       <Card className='@container/card '>
         <CardHeader>
           <div className='flex justify-between items-center'>

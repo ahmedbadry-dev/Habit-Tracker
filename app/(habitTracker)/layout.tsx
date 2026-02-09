@@ -15,11 +15,11 @@ const HabitLayout = ({ children }: { children: React.ReactNode }) => {
             <AppSidebar variant="inset" />
             <SidebarInset>
                 <SiteHeader />
-                <div className="flex-1">
+                <main className="flex-1">
                     <div className="@container/main max-w-7xl m-auto">
                         {children}
                     </div>
-                </div>
+                </main>
             </SidebarInset>
         </SidebarProvider>
     )
