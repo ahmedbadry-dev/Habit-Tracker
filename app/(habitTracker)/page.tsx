@@ -98,35 +98,36 @@ const page = () => {
 
       {/* Habits */}
       <div
-        className='py-6'
+        className='py-6 space-y-6'
         style={{ "--habit-color": 'red' } as React.CSSProperties}>
-        <Card className='flex-row px-3 mb-10'>
-          {/* lift side */}
-          <div className='w-10 h-10 bg-accent rounded-xl'>
-          </div>
+        <Card>
+          <CardContent className='flex flex-row gap-4'>
+            {/* lift side */}
+            <div className='w-10 h-10 bg-accent rounded-xl'>
+            </div>
 
-          {/* right side */}
-          <div className='flex-1 space-y-4'>
-            <div className='flex justify-between'>
-              {/* top */}
-              <div className='flex'>
-                {/* top-lift */}
-                <div>
-                  <div className='flex gap-4 pb-1 '>
-                    <h3 className='max-w-15 sm:max-w-40 md:max-w-80 text-sm md:text-base truncate'>Morning Meditation </h3>
-                    <Badge className='text-xs text-muted-foreground' variant={'secondary'}>Wellness</Badge>
+            {/* right side */}
+            <div className='flex-1 space-y-4'>
+              <div className='flex justify-between'>
+                {/* top */}
+                <div className='flex'>
+                  {/* top-lift */}
+                  <div>
+                    <div className='flex gap-4 pb-1 '>
+                      <h3 className='max-w-15 sm:max-w-40 md:max-w-80 text-sm md:text-base truncate'>Morning Meditation </h3>
+                      <Badge className='text-xs text-muted-foreground' variant={'secondary'}>Wellness</Badge>
+                    </div>
+                    <p className='max-w-35 sm:max-w-70 text-xs text-muted-foreground truncate'>Start the day with mindfulness</p>
                   </div>
-                  <p className='max-w-35 sm:max-w-70 text-xs text-muted-foreground truncate'>Start the day with mindfulness</p>
                 </div>
-              </div>
-              {/* top-right */}
-              <div className='flex items-center'>
-                <Button variant={'ghost'} className='cursor-pointer'>
-                  <MoreVertical className='size-4' />
-                </Button>
-                <Checkbox
-                  // checked={habit.completed}
-                  className="
+                {/* top-right */}
+                <div className='flex items-center'>
+                  <Button variant={'ghost'} className='cursor-pointer'>
+                    <MoreVertical className='size-4' />
+                  </Button>
+                  <Checkbox
+                    // checked={habit.completed}
+                    className="
                     rounded-full w-8 h-8
                     
                     
@@ -135,106 +136,113 @@ const page = () => {
                   data-[state=checked]:text-white
                     "/>
 
+                </div>
               </div>
-            </div>
 
-            {/* progress bar */}
-            <div className='space-y-1'>
-              <div className="h-1.5 w-full rounded-full bg-muted ">
-                <div
-                  className="h-full rounded-full"
-                  style={{ width: "100%", backgroundColor: "var(--habit-color)" }}
-                />
+              {/* progress bar */}
+              <div className='space-y-1'>
+                <div className="h-1.5 w-full rounded-full bg-muted ">
+                  <div
+                    className="h-full rounded-full"
+                    style={{ width: "100%", backgroundColor: "var(--habit-color)" }}
+                  />
+                </div>
+                <div className='flex justify-between'>
+                  <p className='text-xs text-muted-foreground'>100% complete</p>
+                  <div className='flex items-center gap-1 text-muted-foreground text-xs'>
+                    <Clock className='size-3' />
+                    <span>9:15 PM</span>
+                  </div>
+                </div>
               </div>
-              <div className='flex justify-between'>
-                <p className='text-xs text-muted-foreground'>100% complete</p>
-                <div className='flex items-center gap-1 text-muted-foreground text-xs'>
-                  <Clock className='size-3' />
-                  <span>9:15 PM</span>
+
+              {/* button card */}
+              <div className='flex justify-between '>
+                <Badge variant={'secondary'}>
+                  <Flame className='size-4' />
+                  <span>15 day streak</span>
+                </Badge>
+
+                <div className='flex items-center gap-1 text-primary'>
+                  <Check className='size-4' />
+                  <p className='text-xs'>Completed</p>
                 </div>
               </div>
             </div>
-
-            {/* button card */}
-            <div className='flex justify-between '>
-              <Badge variant={'secondary'}>
-                <Flame className='size-4' />
-                <span>15 day streak</span>
-              </Badge>
-
-              <div className='flex items-center gap-1 text-primary'>
-                <Check className='size-4' />
-                <p className='text-xs'>Completed</p>
-              </div>
-            </div>
-          </div>
+          </CardContent>
         </Card>
-        <Card className='flex-row px-3 mb-10'>
-          {/* lift side */}
-          <div className='w-10 h-10 bg-accent rounded-xl'>
-          </div>
 
-          {/* right side */}
-          <div className='flex-1 space-y-4'>
-            <div className='flex justify-between'>
-              {/* top */}
-              <div className='flex'>
-                {/* top-lift */}
-                <div>
-                  <div className='flex gap-4 pb-1 '>
-                    <h3 className='max-w-15 sm:max-w-40 md:max-w-80 text-sm md:text-base truncate'>Morning Meditation </h3>
-                    <Badge className='text-xs text-muted-foreground' variant={'secondary'}>Wellness</Badge>
+
+        <Card>
+          <CardContent className='flex flex-row gap-4'>
+            {/* lift side */}
+            <div className='w-10 h-10 bg-accent rounded-xl'>
+            </div>
+
+            {/* right side */}
+            <div className='flex-1 space-y-4'>
+              <div className='flex justify-between'>
+                {/* top */}
+                <div className='flex'>
+                  {/* top-lift */}
+                  <div>
+                    <div className='flex gap-4 pb-1 '>
+                      <h3 className='max-w-15 sm:max-w-40 md:max-w-80 text-sm md:text-base truncate'>Morning Meditation </h3>
+                      <Badge className='text-xs text-muted-foreground' variant={'secondary'}>Wellness</Badge>
+                    </div>
+                    <p className='max-w-35 sm:max-w-70 text-xs text-muted-foreground truncate'>Start the day with mindfulness</p>
                   </div>
-                  <p className='max-w-35 sm:max-w-70 text-xs text-muted-foreground truncate'>Start the day with mindfulness</p>
                 </div>
-              </div>
-              {/* top-right */}
-              <div className='flex items-center'>
-                <Button variant={'ghost'} className='cursor-pointer'>
-                  <MoreVertical className='size-4' />
-                </Button>
-                <Checkbox
-                  // checked={habit.completed}
-                  className="
+                {/* top-right */}
+                <div className='flex items-center'>
+                  <Button variant={'ghost'} className='cursor-pointer'>
+                    <MoreVertical className='size-4' />
+                  </Button>
+                  <Checkbox
+                    // checked={habit.completed}
+                    className="
                     rounded-full w-8 h-8
+                    
+                    
                     data-[state=checked]:bg-(--habit-color)!
                     data-[state=checked]:border-(--habit-color)
                   data-[state=checked]:text-white
                     "/>
 
+                </div>
               </div>
-            </div>
 
-            {/* progress bar */}
-            <div className='space-y-1'>
-              <div className="h-1.5 w-full rounded-full bg-muted ">
-                <div
-                  className="h-full rounded-full"
-                  style={{ width: "100%", backgroundColor: "var(--habit-color)" }}
-                />
+              {/* progress bar */}
+              <div className='space-y-1'>
+                <div className="h-1.5 w-full rounded-full bg-muted ">
+                  <div
+                    className="h-full rounded-full"
+                    style={{ width: "100%", backgroundColor: "var(--habit-color)" }}
+                  />
+                </div>
+                <div className='flex justify-between'>
+                  <p className='text-xs text-muted-foreground'>100% complete</p>
+                  <div className='flex items-center gap-1 text-muted-foreground text-xs'>
+                    <Clock className='size-3' />
+                    <span>9:15 PM</span>
+                  </div>
+                </div>
               </div>
-              <div className='flex justify-between'>
-                <p className='text-xs text-muted-foreground'>100% complete</p>
-                <div className='flex items-center gap-1 text-muted-foreground text-xs'>
-                  <Clock className='size-3' />
-                  <span>9:15 PM</span>
+
+              {/* button card */}
+              <div className='flex justify-between '>
+                <Badge variant={'secondary'}>
+                  <Flame className='size-4' />
+                  <span>15 day streak</span>
+                </Badge>
+
+                <div className='flex items-center gap-1 text-primary'>
+                  <Check className='size-4' />
+                  <p className='text-xs'>Completed</p>
                 </div>
               </div>
             </div>
-
-            {/* button card */}
-            <div className='flex justify-between '>
-              <Badge variant={'secondary'}>
-                <Flame className='size-4' />
-                <span>15 day streak</span>
-              </Badge>
-
-              <div className='flex items-center gap-1 text-primary'>
-                <Check className='size-4' />
-                <p className='text-xs'>Completed</p>
-              </div>
-            </div>
-          </div>
+          </CardContent>
         </Card>
 
       </div>

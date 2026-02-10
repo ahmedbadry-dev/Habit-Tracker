@@ -1,5 +1,37 @@
 import z from 'zod'
 
+export const HABIT_ICONS = {
+  heart: '❤️',
+  meditation_male: '🧘‍♂️',
+  water: '💧',
+  reading: '📚',
+  meditation: '🧘',
+  writing: '✍️',
+  creativity: '🎨',
+  growth: '🌱',
+  workout: '💪',
+  brain: '🧠',
+  sun: '☀️',
+  social: '👥',
+} as const
+
+export type HabitIconKey = keyof typeof HABIT_ICONS
+const iconKeys = Object.keys(HABIT_ICONS) as HabitIconKey[]
+
+export const COLOR_PRESETS = {
+  indigo: 'linear-gradient(135deg,#6366f1,#9333ea)',
+  teal: 'linear-gradient(135deg,#22c55e,#06b6d4)',
+  pink: 'linear-gradient(135deg,#f472b6,#ec4899)',
+  amber: 'linear-gradient(135deg,#facc15,#f97316)',
+  rose: 'linear-gradient(135deg,#fb7185,#ef4444)',
+  violet: 'linear-gradient(135deg,#818cf8,#a855f7)',
+  emerald: 'linear-gradient(135deg,#10b981,#34d399)',
+  orange: 'linear-gradient(135deg,#fb923c,#f97316)',
+} as const
+
+export type HabitColorKey = keyof typeof COLOR_PRESETS
+const colorKeys = Object.keys(COLOR_PRESETS) as HabitColorKey[]
+
 const habitSchema = z.object({
   title: z
     .string()
@@ -19,11 +51,12 @@ const habitSchema = z.object({
     'creativity',
     'social',
   ]),
-  icon: z.string().min(1, { message: 'Please select an icon' }),
-  color: z.string().min(1, { message: 'Please select a color' }),
+  icon: z.enum(iconKeys as [HabitIconKey, ...HabitIconKey[]]),
+
+  color: z.enum(colorKeys as [HabitColorKey, ...HabitColorKey[]]),
   frequency: z.enum(['daily', 'weekly']),
-  target: z.number().min(1, 'Target must be at least 1'),
-  unit: z.enum(['times', 'minutes', 'hours']),
+  target: z.number().min(1).optional(),
+  unit: z.enum(['times', 'minutes', 'hours', 'pages', 'glasses']),
   reminders: z
     .object({
       enabled: z.boolean(),
