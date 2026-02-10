@@ -1,5 +1,6 @@
 "use client"
 
+
 import { IconCirclePlusFilled, IconMail, type Icon } from "@tabler/icons-react"
 
 import { Button } from "@/components/ui/button"
@@ -10,7 +11,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import Link from "next/link"
+import { NavLink } from "./navLink"
 
 export function NavMain({
   items,
@@ -21,6 +22,8 @@ export function NavMain({
     icon?: Icon
   }[]
 }) {
+
+
   return (
     <SidebarGroup>
       <SidebarGroupContent className="flex flex-col gap-2">
@@ -46,12 +49,31 @@ export function NavMain({
         <SidebarMenu>
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton tooltip={item.title}>
-                {item.icon && <item.icon />}
-                <Link href={item.url}>{item.title}</Link>
-              </SidebarMenuButton>
+              <NavLink href={item.url} className="group block">
+                <SidebarMenuButton
+                  tooltip={item.title}
+                  className="
+                      rounded-md
+                      transition-colors duration-200
+                      bg-transparent
+                      group-[&.active]:bg-muted/60
+                      group-[&.active]:text-foreground
+                      hover:bg-muted/40
+                      cursor-pointer
+                      border-[3px] border-r-[3px] border-transparent 
+                      group-[&.active]:border-[3px] group-[&.active]:border-r-[3px] group-[&.active]:border-r-primary
+                      group-[&.active]:rounded-r-none
+                      rounded-r-none
+                    "
+                >
+                  {item.icon && <item.icon />}
+                  {item.title}
+                </SidebarMenuButton>
+              </NavLink>
             </SidebarMenuItem>
           ))}
+
+
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>
