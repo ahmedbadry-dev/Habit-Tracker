@@ -38,8 +38,8 @@ const data = {
             icon: IconListDetails,
         },
         {
-            title: "Analytics",
-            url: "#",
+            title: "Statistics",
+            url: "/statistics",
             icon: IconChartBar,
         },
         {

@@ -2,8 +2,8 @@
 
 import { Control, useWatch } from "react-hook-form"
 import { type THabitFormValues, COLOR_PRESETS, HABIT_ICONS } from "@/schema/habitSchema"
-import { Card, CardContent, CardHeader } from "../ui/card"
-import { Badge } from "../ui/badge"
+import { Card, CardContent } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 
 export const HabitPreview = ({ control }: { control: Control<THabitFormValues> }) => {
     const [
