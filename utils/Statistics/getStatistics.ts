@@ -31,9 +31,9 @@ export async function getStatistics(
         { label: 'Week 4', completed: 55, total: 60 },
       ],
       categories: [
-        { name: 'Health', completed: 50, total: 60, percentage: 83 },
-        { name: 'Learning', completed: 40, total: 60, percentage: 66 },
-        { name: 'Mindfulness', completed: 30, total: 60, percentage: 50 },
+        { name: 'Health', completed: 50, total: 60 },
+        { name: 'Learning', completed: 40, total: 60 },
+        { name: 'Mindfulness', completed: 30, total: 60 },
       ],
     }
   }
@@ -53,9 +53,9 @@ export async function getStatistics(
         { label: 'Apr', completed: 140, total: 180 },
       ],
       categories: [
-        { name: 'Health', completed: 400, total: 500, percentage: 80 },
-        { name: 'Learning', completed: 300, total: 450, percentage: 66 },
-        { name: 'Mindfulness', completed: 200, total: 400, percentage: 50 },
+        { name: 'Health', completed: 400, total: 500 },
+        { name: 'Learning', completed: 300, total: 450 },
+        { name: 'Mindfulness', completed: 200, total: 400 },
       ],
     }
   }
@@ -78,9 +78,9 @@ export async function getStatistics(
       { label: 'Sun', completed: 8, total: 12 },
     ],
     categories: [
-      { name: 'Health', completed: 15, total: 20, percentage: 75 },
-      { name: 'Learning', completed: 18, total: 25, percentage: 72 },
-      { name: 'Mindfulness', completed: 10, total: 20, percentage: 50 },
+      { name: 'Health', completed: 15, total: 20 },
+      { name: 'Learning', completed: 18, total: 25 },
+      { name: 'Mindfulness', completed: 10, total: 20 },
     ],
   }
 }

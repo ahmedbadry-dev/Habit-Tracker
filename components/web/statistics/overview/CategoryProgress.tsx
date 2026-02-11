@@ -1,13 +1,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { calculatePercentage, getColor } from "@/utils/Statistics/getCompletionStats"
 
 type Category = {
     name: string
     completed: number
     total: number
-    percentage: number
 }
 
 export function CategoryProgress({ data }: { data: Category[] }) {
+
     return (
         <Card>
             <CardHeader>
@@ -32,7 +33,7 @@ export function CategoryProgress({ data }: { data: Category[] }) {
 
                             <div className="text-right">
                                 <p className="font-semibold">
-                                    {category.percentage}%
+                                    {calculatePercentage(category.completed, category.total)}%
                                 </p>
                                 <p className="text-xs text-muted-foreground">
                                     completion
@@ -43,8 +44,9 @@ export function CategoryProgress({ data }: { data: Category[] }) {
                         {/* Progress Bar */}
                         <div className="mt-3 h-2 w-full rounded-full bg-muted overflow-hidden">
                             <div
-                                className="h-full rounded-full bg-primary transition-all duration-700 ease-out"
-                                style={{ width: `${category.percentage}%` }}
+                                className={`h-full rounded-full transition-all duration-700 ${getColor(calculatePercentage(category.completed, category.total))}`}
+
+                                style={{ width: `${calculatePercentage(category.completed, category.total)}%` }}
                             />
                         </div>
                     </div>
