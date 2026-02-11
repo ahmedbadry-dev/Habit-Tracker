@@ -16,7 +16,7 @@ const HabitLayout = ({ children }: { children: React.ReactNode }) => {
             <SidebarInset>
                 <SiteHeader />
                 <main className="flex-1">
-                    <div className="@container/main max-w-7xl m-auto">
+                    <div className="@container/main max-w-5xl m-auto">
                         {children}
                     </div>
                 </main>
