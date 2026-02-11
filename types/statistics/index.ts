@@ -17,7 +17,6 @@ export type CategoryStats = {
   name: string
   completed: number
   total: number
-  percentage: number
 }
 
 export type StatisticsData = {

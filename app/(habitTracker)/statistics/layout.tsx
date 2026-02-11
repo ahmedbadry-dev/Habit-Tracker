@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import { buttonVariants } from "@/components/ui/button"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Header } from "@/components/web/header/Header"
@@ -23,7 +24,9 @@ const StatisticsLayout = ({ children }: { children: React.ReactNode }) => {
                 </div>
                 {/* select filtration */}
                 <div className="flex items-center gap-4">
-                    <StatisticsFilter />
+                    <Suspense fallback={<div className="h-9 w-40 rounded-md bg-muted/50" />}>
+                        <StatisticsFilter />
+                    </Suspense>
                     <div className="p-2 rounded-full cursor-pointer border-2 border-popover-foreground/30 hover:bg-muted">
                         <Filter className="size-4 text-muted-foreground" />
                     </div>

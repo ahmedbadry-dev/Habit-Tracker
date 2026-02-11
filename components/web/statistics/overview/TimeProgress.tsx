@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { TimeProgressData } from "@/types/statistics"
+import { calculatePercentage } from "@/utils/Statistics/getCompletionStats"
 
 type TimeProgressProps = {
     title: string
@@ -18,11 +19,6 @@ export function TimeProgress({
 
             <CardContent className="space-y-4">
                 {data.map((item) => {
-                    const percentage =
-                        item.total > 0
-                            ? Math.round((item.completed / item.total) * 100)
-                            : 0
-
                     return (
                         <div key={item.label} className="space-y-2">
                             <div className="flex items-center justify-between text-sm">
@@ -38,7 +34,7 @@ export function TimeProgress({
                             <div className="relative h-2 w-full rounded-full bg-muted overflow-hidden">
                                 <div
                                     className="absolute left-0 top-0 h-full rounded-full bg-primary transition-all duration-500 ease-out"
-                                    style={{ width: `${percentage}%` }}
+                                    style={{ width: `${calculatePercentage(item.completed, item.total)}%` }}
                                 />
                             </div>
                         </div>

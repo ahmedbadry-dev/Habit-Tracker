@@ -10,12 +10,18 @@ export default function StatisticsFilter() {
     const currentRange = searchParams.get("range") ?? "week"
 
     const handleChange = (value: string) => {
-        router.push(`/statistics?range=${value}`)
+        const params = new URLSearchParams(searchParams.toString())
+        params.set("range", value)
+
+        router.replace(`?${params.toString()}`, {
+            scroll: false,
+        })
     }
+
 
     return (
         <Select value={currentRange} onValueChange={handleChange}>
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="w-40 transition-all duration-200">
                 <SelectValue />
             </SelectTrigger>
             <SelectContent>
