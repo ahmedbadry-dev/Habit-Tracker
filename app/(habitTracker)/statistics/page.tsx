@@ -1,11 +1,20 @@
-import { Header } from "@/components/web/header/Header"
+import OverviewPage from "@/components/web/statistics/overview/OverviewPage"
 
-const Statistics = () => {
-    return (
-        <div className="p-4 space-y-4 ">
+export type StatisticsRange = "week" | "month" | "year"
 
-        </div >
-    )
+const validRanges: StatisticsRange[] = ["week", "month", "year"]
+
+export default async function StatisticsPage({
+    searchParams,
+}: {
+    searchParams: Promise<{ range?: string }>
+}) {
+    const { range: rawRange } = await searchParams
+
+    const range: StatisticsRange =
+        validRanges.includes(rawRange as StatisticsRange)
+            ? (rawRange as StatisticsRange)
+            : "week"
+
+    return <OverviewPage range={range} />
 }
-
-export default Statistics
