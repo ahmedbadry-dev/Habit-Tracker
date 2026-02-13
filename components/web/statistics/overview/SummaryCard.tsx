@@ -13,7 +13,15 @@ export default function SummaryCard({
     icon: Icon,
 }: SummaryCardProps) {
     return (
-        <Card className="rounded-xl shadow-sm hover:shadow-md transition-shadow">
+        <Card className="
+                rounded-xl 
+                bg-linear-to-br
+                from-background
+                via-background
+                to-muted/20
+                border-border/40
+                shadow-sm
+                animate-in fade-in duration-500">
             <CardContent className="flex md:flex-col justify-between space-y-4">
 
                 <div className="flex gap-2 items-center">
