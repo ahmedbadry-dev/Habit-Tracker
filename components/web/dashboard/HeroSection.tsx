@@ -15,7 +15,7 @@ export default function HeroSection() {
     return (
         <Card
             className="
-        bg-gradient-to-br
+        bg-linear-to-br
         from-background
         via-background
         to-muted/20
