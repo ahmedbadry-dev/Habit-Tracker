@@ -1,6 +1,6 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
-import { getOrCreateUserId } from './_utils/auth'
+import { getOrCreateUserId, getUserId } from './_utils/auth'
 
 import {
   addDays,
@@ -182,7 +182,7 @@ export const toggleHabit = mutation({
 export const getTodayHabits = query({
   args: { dateKey: v.string() },
   handler: async (ctx, args) => {
-    const userId = await getOrCreateUserId(ctx)
+    const userId = await getUserId(ctx)
 
     // 1) habits (non-archived)
     const habits = await ctx.db
@@ -433,7 +433,7 @@ export const getHabitById = query({
     habitId: v.id('habits'),
   },
   handler: async (ctx, args) => {
-    const userId = await getOrCreateUserId(ctx)
+    const userId = await getUserId(ctx) // ← ده الصح
 
     const habit = await ctx.db.get(args.habitId)
 
