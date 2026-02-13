@@ -3,11 +3,9 @@ import DashboardClient from "@/components/web/dashboard/DashboardClient"
 import HeroSection from "@/components/web/dashboard/HeroSection"
 import QuickActions from "@/components/web/dashboard/QuickActions"
 import TodayHabits from "@/components/web/dashboard/TodayHabits"
-
-
 import { Habit } from "@/types/habit/habit"
 
-export default async function DashboardPage() {
+export default function DashboardPage() {
   // لاحقًا Convex
   const habits: Habit[] = [
     {
