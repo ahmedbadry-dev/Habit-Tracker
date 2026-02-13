@@ -4,6 +4,7 @@ import { useQuery, useMutation } from "convex/react"
 import { api } from "@/convex/_generated/api"
 import { HabitItem } from "@/components/web/habit/HabitItem"
 import { useEffect } from "react"
+import { Card } from "@/components/ui/card"
 
 export default function DashboardClient({
     todayKey,
@@ -36,7 +37,19 @@ export default function DashboardClient({
     }
 
     if (habits.length === 0) {
-        return <div>No habits yet</div>
+        return <Card
+            className="
+            flex justify-center items-center
+            min-h-40 text-2xl
+                bg-linear-to-br
+                from-background
+                via-background
+                to-muted/20
+                border-border/40
+                shadow-sm
+                animate-in fade-in duration-500
+              "
+        >No habits yet</Card>
     }
 
     const toggleHabit = useMutation(api.habits.toggleHabit).withOptimisticUpdate(

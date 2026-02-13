@@ -42,7 +42,10 @@ export default function QuickActions() {
             <div className="grid gap-4 md:grid-cols-2">
                 {actions.map((action, i) => (
                     <Link key={i} href={action.href ?? "#"}>
-                        <Card className="transition-all duration-200 hover:bg-muted/30 hover:-translate-y-1 cursor-pointer">
+                        <Card className="transition-all duration-200 hover:bg-muted/30 hover:-translate-y-1 cursor-pointer
+                        
+                        
+                        ">
                             <CardContent className="flex items-start gap-4 py-5">
                                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
                                     {action.icon}

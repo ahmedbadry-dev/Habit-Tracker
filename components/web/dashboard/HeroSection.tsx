@@ -8,9 +8,57 @@ import { Badge } from "@/components/ui/badge"
 import { Calendar, TrophyIcon, TrendingUp } from "lucide-react"
 import { ProgressRing } from "./ProgressRing"
 
+import { api } from "@/convex/_generated/api"
+import { fetchQuery } from "convex/nextjs"
+import { getToken } from "@/lib/auth-server"
 
-export default function HeroSection() {
-    const percentage = 30
+type Props = {
+    todayKey: string
+}
+
+// Greeting
+function getGreeting() {
+    const hour = new Date().getHours()
+
+    if (hour >= 5 && hour < 12) return "Good Morning"
+    if (hour >= 12 && hour < 17) return "Good Afternoon"
+    if (hour >= 17 && hour < 22) return "Good Evening"
+
+    return "Good Night"
+}
+
+// First name only
+function getFirstName(fullName?: string | null) {
+    if (!fullName) return ""
+    return fullName.split(" ")[0]
+}
+
+export default async function HeroSection({ todayKey }: Props) {
+    const token = await getToken()
+
+    const [overview, userName] = await Promise.all([
+        fetchQuery(
+            api.dashboard.getDailyOverview,
+            { dateKey: todayKey },
+            { token }
+        ),
+        fetchQuery(
+            api.users.getCurrentUserName,
+            {},
+            { token }
+        ),
+    ])
+
+    const firstName = getFirstName(userName)
+    const greeting = getGreeting()
+
+    const {
+        dateLabel,
+        totalHabits,
+        completedHabits,
+        completionPercentage,
+        currentStreak,
+    } = overview
 
     return (
         <Card
@@ -25,13 +73,14 @@ export default function HeroSection() {
       "
         >
             <CardHeader>
-                <div className="flex justify-between items-center">
-                    <h1 className="text-2xl md:text-3xl lg:text-5xl font-medium tracking-tight">
-                        Good Morning!
+                <div className="flex flex-col-reverse gap-4 md:flex-row md:gap-0 md:justify-between md:items-center">
+                    <h1 className="text-2xl lg:text-4xl font-medium tracking-tight">
+                        {greeting}
+                        {firstName ? `, ${firstName}` : ""}!
                     </h1>
 
                     <Badge
-                        className="
+                        className=" self-end
               flex items-center gap-2
               px-4 py-2
               bg-primary/90 text-primary-foreground
@@ -41,7 +90,7 @@ export default function HeroSection() {
                     >
                         <TrophyIcon className="size-4" />
                         <span className="text-xs md:text-sm">
-                            12 Day Streak
+                            {currentStreak} Day Streak
                         </span>
                     </Badge>
                 </div>
@@ -49,7 +98,7 @@ export default function HeroSection() {
                 <CardDescription className="flex items-center gap-2 mt-1">
                     <Calendar className="size-4" />
                     <span className="text-sm text-muted-foreground">
-                        Sunday, February 8
+                        {dateLabel}
                     </span>
                 </CardDescription>
             </CardHeader>
@@ -67,21 +116,19 @@ export default function HeroSection() {
             hover:bg-muted/40
           "
                 >
-                    {/* Left Side */}
                     <div className="flex gap-6 items-center">
-                        <ProgressRing percentage={percentage} />
+                        <ProgressRing percentage={completionPercentage} />
 
                         <div>
                             <p className="text-xl md:text-2xl font-medium">
-                                3 of 6 completed
+                                {completedHabits} of {totalHabits} completed
                             </p>
                             <p className="text-muted-foreground">
-                                50% completed
+                                {completionPercentage}% completed
                             </p>
                         </div>
                     </div>
 
-                    {/* Right Icon */}
                     <TrendingUp className="opacity-70" />
                 </div>
             </CardContent>

@@ -26,3 +26,18 @@ export const syncUser = mutation({
     })
   },
 })
+
+import { query } from './_generated/server'
+import { getUserId } from './_utils/auth'
+
+export const getCurrentUserName = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getUserId(ctx)
+
+    const user = await ctx.db.get(userId)
+    if (!user) return null
+
+    return user.name ?? null
+  },
+})
