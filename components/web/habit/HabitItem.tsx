@@ -3,9 +3,13 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { Clock, Flame, Check } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { HABIT_ICONS } from "@/schema/habitSchema"
+import {
+    COLOR_PRESETS,
+    HABIT_ICONS,
+    HabitColorKey,
+    HabitIconKey,
+} from "@/schema/habitSchema"
 import { Id } from "@/convex/_generated/dataModel"
-import { HabitIconKey } from "@/schema/habitSchema"
 
 type Habit = {
     id: Id<"habits">
@@ -20,6 +24,15 @@ type Habit = {
     completedAt?: string
 }
 
+function formatCompletedAt(value?: string) {
+    if (!value) return null
+
+    return new Date(value).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+    })
+}
+
 export function HabitItem({
     habit,
     onToggle,
@@ -28,6 +41,7 @@ export function HabitItem({
     onToggle: (id: Id<"habits">, checked: boolean) => void
 }) {
     const resolvedIcon = HABIT_ICONS[habit.icon as HabitIconKey] ?? habit.icon
+    const resolvedColor = COLOR_PRESETS[habit.color as HabitColorKey] ?? habit.color
 
     return (
         <Card
@@ -41,7 +55,7 @@ export function HabitItem({
                 {/* Icon */}
                 <div
                     className="w-10 h-10 rounded-xl flex items-center justify-center text-lg"
-                    style={{ background: habit.color }}
+                    style={{ background: resolvedColor }}
                 >
                     {resolvedIcon}
                 </div>
@@ -99,10 +113,7 @@ export function HabitItem({
                             {habit.completedAt && (
                                 <div className="flex items-center gap-1">
                                     <Clock className="size-3" />
-                                    {new Date(habit.completedAt).toLocaleTimeString([], {
-                                        hour: "2-digit",
-                                        minute: "2-digit",
-                                    })}
+                                    {formatCompletedAt(habit.completedAt)}
                                 </div>
                             )}
                         </div>
