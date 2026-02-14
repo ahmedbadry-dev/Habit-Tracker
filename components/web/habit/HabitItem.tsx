@@ -12,7 +12,7 @@ type Habit = {
     title: string
     description?: string
     category: string
-    icon: HabitIconKey
+    icon: string
     color: string
     completed: boolean
     completionPercentage: number
@@ -27,6 +27,8 @@ export function HabitItem({
     habit: Habit
     onToggle: (id: Id<"habits">, checked: boolean) => void
 }) {
+    const resolvedIcon = HABIT_ICONS[habit.icon as HabitIconKey] ?? habit.icon
+
     return (
         <Card
             className={cn(
@@ -41,7 +43,7 @@ export function HabitItem({
                     className="w-10 h-10 rounded-xl flex items-center justify-center text-lg"
                     style={{ background: habit.color }}
                 >
-                    {HABIT_ICONS[habit.icon]}
+                    {resolvedIcon}
                 </div>
 
                 <div className="flex-1 space-y-4">
