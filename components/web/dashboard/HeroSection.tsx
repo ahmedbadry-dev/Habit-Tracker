@@ -1,3 +1,5 @@
+"use client"
+
 import {
     Card,
     CardContent,
@@ -5,60 +7,102 @@ import {
     CardHeader,
 } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Calendar, TrophyIcon, TrendingUp } from "lucide-react"
+import { Calendar, TrophyIcon, TrendingUp, Flame, Repeat } from "lucide-react"
 import { ProgressRing } from "./ProgressRing"
 
 import { api } from "@/convex/_generated/api"
-import { fetchQuery } from "convex/nextjs"
-import { getToken } from "@/lib/auth-server"
+import { Preloaded, usePreloadedQuery } from "convex/react"
+import { useEffect, useMemo, useState } from "react"
 
-type Props = {
-    todayKey: string
-}
+/* ------------------ Helpers ------------------ */
 
-// Greeting
 function getGreeting() {
     const hour = new Date().getHours()
-
     if (hour >= 5 && hour < 12) return "Good Morning"
     if (hour >= 12 && hour < 17) return "Good Afternoon"
     if (hour >= 17 && hour < 22) return "Good Evening"
-
     return "Good Night"
 }
 
-// First name only
 function getFirstName(fullName?: string | null) {
     if (!fullName) return ""
     return fullName.split(" ")[0]
 }
 
-export default async function HeroSection({ todayKey }: Props) {
-    const token = await getToken()
+function getMotivation(streak: number, percentage: number) {
+    if (streak >= 7) return "🔥 You're on fire! Keep the momentum going."
+    if (percentage === 100) return "🚀 Perfect day! Outstanding discipline."
+    if (percentage >= 70) return "💪 Strong progress! Keep pushing."
+    if (percentage > 0) return "🌱 Great start. Keep building the habit."
+    return "⚡ Fresh start. Today is yours."
+}
 
-    const [overview, userName] = await Promise.all([
-        fetchQuery(
-            api.dashboard.getDailyOverview,
-            { dateKey: todayKey },
-            { token }
-        ),
-        fetchQuery(
-            api.users.getCurrentUserName,
-            {},
-            { token }
-        ),
-    ])
+// smooth number animation
+function useAnimatedNumber(value: number, duration = 450) {
+    const [display, setDisplay] = useState(value)
+
+    useEffect(() => {
+        const start = display
+        const end = value
+        if (start === end) return
+
+        const startTime = performance.now()
+
+        let raf = 0
+        const tick = (t: number) => {
+            const p = Math.min(1, (t - startTime) / duration)
+            const next = Math.round(start + (end - start) * p)
+            setDisplay(next)
+            if (p < 1) raf = requestAnimationFrame(tick)
+        }
+
+        raf = requestAnimationFrame(tick)
+        return () => cancelAnimationFrame(raf)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [value])
+
+    return display
+}
+
+/* ------------------ Props ------------------ */
+
+type Props = {
+    todayKey: string
+    preloadedOverview: Preloaded<typeof api.dashboard.getDailyOverview>
+    preloadedUserName: Preloaded<typeof api.users.getCurrentUserName>
+}
+
+/* ------------------ Component ------------------ */
+
+export default function HeroSection({
+    todayKey,
+    preloadedOverview,
+    preloadedUserName,
+}: Props) {
+    const overview = usePreloadedQuery(preloadedOverview)
+    const userName = usePreloadedQuery(preloadedUserName)
 
     const firstName = getFirstName(userName)
     const greeting = getGreeting()
 
-    const {
-        dateLabel,
-        totalHabits,
-        completedHabits,
-        completionPercentage,
-        currentStreak,
-    } = overview
+    const motivation = useMemo(() => {
+        return getMotivation(overview.daily.perfectStreak, overview.overall.percentage)
+    }, [overview.daily.perfectStreak, overview.overall.percentage])
+
+    // Animated values
+    const overallPct = useAnimatedNumber(overview.overall.percentage)
+    const overallCompleted = useAnimatedNumber(overview.overall.completed)
+    const overallTotal = useAnimatedNumber(overview.overall.total)
+
+    const dailyPerfect = useAnimatedNumber(overview.daily.perfectStreak)
+    const weeklyPct = useAnimatedNumber(overview.weekly.percentage)
+
+    const bestStreakValue = useAnimatedNumber(overview.bestStreak?.value ?? 0)
+
+    const bestStreakLabel =
+        overview.bestStreak && overview.bestStreak.value > 0
+            ? `${bestStreakValue} ${overview.bestStreak.unit === "week" ? "Week" : "Day"} Streak`
+            : "No streak yet"
 
     return (
         <Card
@@ -73,37 +117,70 @@ export default async function HeroSection({ todayKey }: Props) {
       "
         >
             <CardHeader>
-                <div className="flex flex-col-reverse gap-4 md:flex-row md:gap-0 md:justify-between md:items-center">
-                    <h1 className="text-2xl lg:text-4xl font-medium tracking-tight">
-                        {greeting}
-                        {firstName ? `, ${firstName}` : ""}!
-                    </h1>
+                <div className="flex flex-col-reverse gap-4 md:flex-row md:gap-0 md:justify-between md:items-start">
+                    <div className="space-y-3">
+                        <h1 className="text-2xl lg:text-4xl font-medium tracking-tight">
+                            {greeting}
+                            {firstName ? `, ${firstName}` : ""}!
+                        </h1>
 
-                    <Badge
-                        className=" self-end
-              flex items-center gap-2
-              px-4 py-2
-              bg-primary/90 text-primary-foreground
-              hover:bg-primary
-              transition-all duration-200
-            "
-                    >
-                        <TrophyIcon className="size-4" />
-                        <span className="text-xs md:text-sm">
-                            {currentStreak} Day Streak
-                        </span>
-                    </Badge>
+                        <CardDescription className="flex flex-col md:flex-row gap-6 md:items-center">
+                            <p className="text-base md:text-lg lg:text-xl text-primary/80">
+                                {motivation}
+                            </p>
+
+                            <div className="flex items-center gap-2 self-start md:self-auto">
+                                <Calendar className="size-4" />
+                                <span className="text-sm text-muted-foreground">
+                                    {overview.dateLabel}
+                                </span>
+                            </div>
+                        </CardDescription>
+                    </div>
+
+                    {/* Separate badges */}
+                    <div className="flex flex-wrap gap-2 justify-end">
+                        <Badge
+                            className="
+                flex items-center gap-2
+                px-4 py-2
+                bg-primary/90 text-primary-foreground
+                hover:bg-primary
+                transition-all duration-200
+              "
+                        >
+                            <TrophyIcon className="size-4" />
+                            <span className="text-xs md:text-sm">
+                                {dailyPerfect} Perfect Days
+                            </span>
+                        </Badge>
+
+                        <Badge
+                            variant="secondary"
+                            className="flex items-center gap-2 px-4 py-2"
+                            title={overview.bestStreak?.title ?? undefined}
+                        >
+                            <Flame className="size-4" />
+                            <span className="text-xs md:text-sm">
+                                {bestStreakLabel}
+                            </span>
+                        </Badge>
+
+                        <Badge
+                            variant="outline"
+                            className="flex items-center gap-2 px-4 py-2"
+                        >
+                            <Repeat className="size-4" />
+                            <span className="text-xs md:text-sm">
+                                Weekly {weeklyPct}%
+                            </span>
+                        </Badge>
+                    </div>
                 </div>
-
-                <CardDescription className="flex items-center gap-2 mt-1">
-                    <Calendar className="size-4" />
-                    <span className="text-sm text-muted-foreground">
-                        {dateLabel}
-                    </span>
-                </CardDescription>
             </CardHeader>
 
-            <CardContent>
+            <CardContent className="space-y-4">
+                {/* Main overall */}
                 <div
                     className="
             flex justify-between items-center
@@ -117,20 +194,45 @@ export default async function HeroSection({ todayKey }: Props) {
           "
                 >
                     <div className="flex gap-6 items-center">
-                        <ProgressRing percentage={completionPercentage} />
+                        <ProgressRing percentage={overallPct} />
 
                         <div>
-                            <p className="text-xl md:text-2xl font-medium">
-                                {completedHabits} of {totalHabits} completed
+                            <p className="text-lg md:text-2xl font-medium">
+                                {overallCompleted} of {overallTotal} completed
                             </p>
                             <p className="text-muted-foreground">
-                                {completionPercentage}% completed
+                                {overallPct}% completed
                             </p>
                         </div>
                     </div>
 
-                    <TrendingUp className="opacity-70" />
+                    <TrendingUp className="opacity-70 hidden md:block" />
                 </div>
+
+                {/* Weekly progress bar inside hero */}
+                {overview.weekly.total > 0 && (
+                    <div className="rounded-2xl border border-border/40 bg-muted/20 p-4">
+                        <div className="flex items-center justify-between mb-2">
+                            <p className="text-sm font-medium">
+                                Weekly progress
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                                {overview.weekly.completed} / {overview.weekly.total} habits
+                            </p>
+                        </div>
+
+                        <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+                            <div
+                                className="h-full rounded-full transition-[width] duration-500 ease-out"
+                                style={{ width: `${weeklyPct}%`, backgroundColor: "var(--primary)" }}
+                            />
+                        </div>
+
+                        <p className="mt-2 text-xs text-muted-foreground">
+                            Week starts: {overview.weekly.weekStart}
+                        </p>
+                    </div>
+                )}
             </CardContent>
         </Card>
     )

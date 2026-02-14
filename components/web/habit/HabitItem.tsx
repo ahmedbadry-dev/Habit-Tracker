@@ -3,9 +3,12 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { Clock, Flame, Check } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { HABIT_ICONS } from "@/schema/habitSchema"
+import { Id } from "@/convex/_generated/dataModel"
+import { HabitIconKey } from "@/schema/habitSchema"
 
 type Habit = {
-    id: string
+    id: Id<"habits">
     title: string
     description?: string
     category: string
@@ -22,8 +25,10 @@ export function HabitItem({
     onToggle,
 }: {
     habit: Habit
-    onToggle: (id: string, checked: boolean) => void
+    onToggle: (id: Id<"habits">, checked: boolean) => void
 }) {
+    const resolvedIcon = HABIT_ICONS[habit.icon as HabitIconKey] ?? habit.icon
+
     return (
         <Card
             className={cn(
@@ -38,7 +43,7 @@ export function HabitItem({
                     className="w-10 h-10 rounded-xl flex items-center justify-center text-lg"
                     style={{ background: habit.color }}
                 >
-                    {habit.icon}
+                    {resolvedIcon}
                 </div>
 
                 <div className="flex-1 space-y-4">
@@ -94,7 +99,10 @@ export function HabitItem({
                             {habit.completedAt && (
                                 <div className="flex items-center gap-1">
                                     <Clock className="size-3" />
-                                    <span>{habit.completedAt}</span>
+                                    {new Date(habit.completedAt).toLocaleTimeString([], {
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                    })}
                                 </div>
                             )}
                         </div>
