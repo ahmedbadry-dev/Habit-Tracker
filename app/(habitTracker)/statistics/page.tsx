@@ -1,4 +1,6 @@
 import OverviewPage from "@/components/web/statistics/overview/OverviewPage"
+import { OverviewSkeleton } from "@/components/web/statistics/overview/OverviewSkeleton"
+import { Suspense } from "react"
 
 export type StatisticsRange = "week" | "month" | "year"
 
@@ -16,5 +18,9 @@ export default async function StatisticsPage({
             ? (rawRange as StatisticsRange)
             : "week"
 
-    return <OverviewPage range={range} />
+    return (
+        <Suspense fallback={<OverviewSkeleton />}>
+            <OverviewPage range={range} />
+        </Suspense>
+    )
 }
