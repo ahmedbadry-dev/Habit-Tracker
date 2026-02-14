@@ -1,20 +1,90 @@
-import { query } from './_generated/server'
 import { v } from 'convex/values'
-import { getOrCreateUserId } from './_utils/auth'
-import { getRangeBounds, RangeKey } from './_utils/range'
+import { query } from './_generated/server'
+import { getUserId } from './_utils/auth'
+import { addDays } from './_utils/dateKeys'
+
+function formatKey(date: Date) {
+  return date.toISOString().split('T')[0]
+}
+
+function getRangeDates(range: 'week' | 'month' | 'year') {
+  const now = new Date()
+
+  const start = new Date(now)
+  const end = new Date(now)
+
+  if (range === 'week') {
+    const day = now.getDay()
+    const diff = day === 0 ? 6 : day - 1
+    start.setDate(now.getDate() - diff)
+  }
+
+  if (range === 'month') {
+    start.setDate(1)
+  }
+
+  if (range === 'year') {
+    start.setMonth(0)
+    start.setDate(1)
+  }
+
+  return {
+    startKey: formatKey(start),
+    endKey: formatKey(end),
+  }
+}
+
+function getPreviousRangeDates(
+  range: 'week' | 'month' | 'year',
+  currentStartKey: string
+) {
+  const start = new Date(currentStartKey)
+
+  if (range === 'week') start.setDate(start.getDate() - 7)
+  if (range === 'month') start.setMonth(start.getMonth() - 1)
+  if (range === 'year') start.setFullYear(start.getFullYear() - 1)
+
+  const end = new Date(currentStartKey)
+  end.setDate(end.getDate() - 1)
+
+  return {
+    startKey: formatKey(start),
+    endKey: formatKey(end),
+  }
+}
+
+function weekdayLabel(dateKey: string) {
+  const d = new Date(dateKey + 'T00:00:00Z')
+  return d.toLocaleDateString('en-US', { weekday: 'short' }) // Mon
+}
+
+function monthLabel(yyyymm: string) {
+  const [y, m] = yyyymm.split('-').map(Number)
+  const d = new Date(Date.UTC(y, m - 1, 1))
+  return d.toLocaleDateString('en-US', { month: 'short' }) // Feb
+}
+
+function overallText(p: number) {
+  if (p >= 85) return 'Elite consistency. Keep the pace and raise your targets.'
+  if (p >= 65) return 'Strong momentum. Aim to lock in 1 more habit.'
+  if (p >= 40) return 'Decent start. Focus on the easiest habit first.'
+  return 'Low consistency. Reduce friction and set smaller targets.'
+}
 
 export const getStatistics = query({
   args: {
-    todayKey: v.string(),
     range: v.union(v.literal('week'), v.literal('month'), v.literal('year')),
   },
-  handler: async (ctx, args) => {
-    const userId = await getOrCreateUserId(ctx)
-    const bounds = getRangeBounds(args.todayKey, args.range as RangeKey)
 
-    // ------------------------------------------------
-    // 1️⃣ Fetch active habits
-    // ------------------------------------------------
+  handler: async (ctx, args) => {
+    const userId = await getUserId(ctx)
+
+    const { startKey, endKey } = getRangeDates(args.range)
+    const previous = getPreviousRangeDates(args.range, startKey)
+
+    // ----------------------------
+    // HABITS
+    // ----------------------------
     const habits = await ctx.db
       .query('habits')
       .withIndex('by_userId_archived', (q) =>
@@ -22,168 +92,214 @@ export const getStatistics = query({
       )
       .collect()
 
-    const habitMap = new Map(habits.map((h) => [h._id, h]))
+    const totalHabits = habits.length
 
-    // ------------------------------------------------
-    // 2️⃣ Fetch logs once
-    // ------------------------------------------------
+    if (totalHabits === 0) {
+      return {
+        summary: {
+          totalHabits: 0,
+          completed: 0,
+          currentStreak: 0,
+          longestStreak: 0,
+        },
+        progress: [],
+        categories: [],
+        habitsPerformance: [],
+        insights: null,
+      }
+    }
+
+    // ----------------------------
+    // LOGS
+    // ----------------------------
     const logs = await ctx.db
       .query('habitLogs')
-      .withIndex('by_userId_dateKey', (q) => q.eq('userId', userId))
+      .withIndex('by_userId_dateKey', (q) =>
+        q.eq('userId', userId).gte('dateKey', startKey)
+      )
       .collect()
 
-    const inRange = (k: string, a: string, b: string) => k >= a && k <= b
+    const previousLogs = await ctx.db
+      .query('habitLogs')
+      .withIndex('by_userId_dateKey', (q) =>
+        q.eq('userId', userId).gte('dateKey', previous.startKey)
+      )
+      .collect()
 
-    const currentLogs = logs.filter((l) =>
-      inRange(l.dateKey, bounds.startKey, bounds.endKey)
-    )
+    const completedLogs = logs.filter((l) => l.completed)
 
-    const previousLogs = logs.filter((l) =>
-      inRange(l.dateKey, bounds.previousStartKey, bounds.previousEndKey)
-    )
+    // ----------------------------
+    // SUMMARY
+    // ----------------------------
+    const completed = completedLogs.length
 
-    // ------------------------------------------------
-    // 3️⃣ SUMMARY (Weekly-aware expected checkins)
-    // ------------------------------------------------
+    // streak (daily global streak)
+    const completedDays = Array.from(
+      new Set(completedLogs.map((l) => l.dateKey))
+    ).sort()
 
-    const totalCompletions = currentLogs.filter((l) => l.completed).length
+    let currentStreak = 0
+    let cursor = endKey
 
-    const previousCompletions = previousLogs.filter((l) => l.completed).length
+    while (completedDays.includes(cursor)) {
+      currentStreak++
+      cursor = addDays(cursor, -1)
+    }
 
-    // Number of weeks inside range
-    const weeksInRange = Math.ceil(bounds.days / 7)
+    let longestStreak = 0
+    let run = 1
 
-    const expectedCheckins = habits.reduce((total, h) => {
-      if (h.frequency === 'weekly') {
-        return total + weeksInRange
-      }
-      return total + bounds.days
-    }, 0)
+    for (let i = 1; i < completedDays.length; i++) {
+      const expected = addDays(completedDays[i - 1], 1)
+      if (completedDays[i] === expected) {
+        run++
+        longestStreak = Math.max(longestStreak, run)
+      } else run = 1
+    }
 
-    const completionRate =
-      expectedCheckins > 0
-        ? Math.round((totalCompletions / expectedCheckins) * 100)
-        : 0
+    // ----------------------------
+    // TIME PROGRESS
+    // ----------------------------
+    const progressMap = new Map<string, { completed: number; total: number }>()
 
-    const previousRate =
-      expectedCheckins > 0
-        ? Math.round((previousCompletions / expectedCheckins) * 100)
-        : 0
+    for (const log of logs) {
+      const key =
+        args.range === 'year'
+          ? log.dateKey.slice(0, 7) // YYYY-MM
+          : log.dateKey
 
-    const improvementVsPrevious = completionRate - previousRate
+      if (!progressMap.has(key))
+        progressMap.set(key, { completed: 0, total: 0 })
 
-    // ------------------------------------------------
-    // 4️⃣ PER HABIT STATS
-    // ------------------------------------------------
+      const item = progressMap.get(key)!
+      item.total++
+      if (log.completed) item.completed++
+    }
 
-    const habitStats = habits.map((h) => {
-      const habitCurrentLogs = currentLogs.filter((l) => l.habitId === h._id)
-
-      const habitPreviousLogs = previousLogs.filter((l) => l.habitId === h._id)
-
-      const currentCount = habitCurrentLogs.filter((l) => l.completed).length
-
-      const previousCount = habitPreviousLogs.filter((l) => l.completed).length
-
-      const expected = h.frequency === 'weekly' ? weeksInRange : bounds.days
-
-      const rate = expected > 0 ? currentCount / expected : 0
-
-      return {
-        habit: h,
-        currentCount,
-        previousCount,
-        improvement: currentCount - previousCount,
-        rate,
-      }
-    })
-
-    // ------------------------------------------------
-    // 5️⃣ BEST / WORST / MOST IMPROVED
-    // ------------------------------------------------
-
-    const sortedByRate = [...habitStats].sort((a, b) => b.rate - a.rate)
-
-    const sortedByImprovement = [...habitStats].sort(
-      (a, b) => b.improvement - a.improvement
-    )
-
-    const bestHabit = sortedByRate.length > 0 ? sortedByRate[0].habit : null
-
-    const worstHabit =
-      sortedByRate.length > 0
-        ? sortedByRate[sortedByRate.length - 1].habit
-        : null
-
-    const mostImproved =
-      sortedByImprovement.length > 0 ? sortedByImprovement[0].habit : null
-
-    // ------------------------------------------------
-    // 6️⃣ AT RISK (Low completion rate)
-    // ------------------------------------------------
-
-    const atRisk = habitStats.filter((h) => h.rate < 0.4).map((h) => h.habit)
-
-    // ------------------------------------------------
-    // 7️⃣ CATEGORY PERFORMANCE
-    // ------------------------------------------------
-
-    const categoryMap = new Map<string, number>()
-
-    habitStats.forEach((stat) => {
-      const cat = stat.habit.category
-      const prev = categoryMap.get(cat) ?? 0
-      categoryMap.set(cat, prev + stat.currentCount)
-    })
-
-    const categoryPerformance = Array.from(categoryMap.entries()).map(
-      ([category, value]) => ({
-        category,
-        value,
+    // بعد ما تبني progressMap
+    const progress = Array.from(progressMap.entries()).map(
+      ([label, value]) => ({
+        label:
+          args.range === 'week'
+            ? weekdayLabel(label)
+            : args.range === 'year'
+              ? monthLabel(label)
+              : label.slice(5), // month: "MM-DD" مؤقتًا
+        completed: value.completed,
+        total: value.total,
       })
     )
 
-    // ------------------------------------------------
-    // 8️⃣ TIME PROGRESS (Chart Data)
-    // ------------------------------------------------
+    // ----------------------------
+    // CATEGORY STATS
+    // ----------------------------
+    const categoryMap = new Map<string, { completed: number; total: number }>()
 
-    const timeMap = new Map<string, number>()
+    for (const habit of habits) {
+      if (!categoryMap.has(habit.category))
+        categoryMap.set(habit.category, { completed: 0, total: 0 })
 
-    currentLogs.forEach((l) => {
-      if (!l.completed) return
-      const prev = timeMap.get(l.dateKey) ?? 0
-      timeMap.set(l.dateKey, prev + 1)
+      const cat = categoryMap.get(habit.category)!
+      cat.total++
+
+      const hasCompletion = completedLogs.some((l) => l.habitId === habit._id)
+
+      if (hasCompletion) cat.completed++
+    }
+
+    const categories = Array.from(categoryMap.entries()).map(
+      ([name, value]) => ({
+        name,
+        completed: value.completed,
+        total: value.total,
+      })
+    )
+
+    // ----------------------------
+    // HABIT PERFORMANCE
+    // ----------------------------
+    const habitsPerformance = habits.map((habit) => {
+      const habitLogs = logs.filter((l) => l.habitId === habit._id)
+      const prevHabitLogs = previousLogs.filter((l) => l.habitId === habit._id)
+
+      const totalCompletions = habitLogs.filter((l) => l.completed).length
+      const totalTargets = habitLogs.length
+
+      const previousPercentage =
+        prevHabitLogs.length === 0
+          ? 0
+          : Math.round(
+              (prevHabitLogs.filter((l) => l.completed).length /
+                prevHabitLogs.length) *
+                100
+            )
+
+      const percentage =
+        totalTargets === 0
+          ? 0
+          : Math.round((totalCompletions / totalTargets) * 100)
+
+      return {
+        id: habit._id,
+        name: habit.title,
+        currentStreak,
+        totalCompletions,
+        totalTargets,
+        previousPercentage,
+        percentage,
+        improvement: percentage - previousPercentage,
+      }
     })
 
-    const timeProgress = Array.from(timeMap.entries())
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([date, value]) => ({
-        date,
-        value,
-      }))
+    // ----------------------------
+    // INSIGHTS
+    // ----------------------------
+    const sortedByPercentage = [...habitsPerformance].sort(
+      (a, b) => b.percentage - a.percentage
+    )
 
-    // ------------------------------------------------
-    // RETURN
-    // ------------------------------------------------
+    const sortedByImprovement = [...habitsPerformance].sort(
+      (a, b) => b.improvement - a.improvement
+    )
+
+    const bestHabit = sortedByPercentage[0]
+    const worstHabit = sortedByPercentage.at(-1)
+    const mostImproved = sortedByImprovement[0]
+
+    const overallCompletion =
+      logs.length === 0 ? 0 : Math.round((completed / logs.length) * 100)
+
+    const insightsText = {
+      overall: overallText(overallCompletion),
+      best: bestHabit
+        ? `Your best habit is "${bestHabit.name}" — keep protecting it.`
+        : '',
+      risk: worstHabit
+        ? `Watch "${worstHabit.name}". Try scheduling it earlier.`
+        : '',
+      improved: mostImproved
+        ? `"${mostImproved.name}" is improving fast — double down.`
+        : '',
+    }
 
     return {
-      range: args.range,
-      bounds,
-
       summary: {
-        totalCompletions,
-        completionRate,
-        improvementVsPrevious,
+        totalHabits,
+        completed,
+        currentStreak,
+        longestStreak,
       },
-
-      categoryPerformance,
-
-      bestHabit,
-      worstHabit,
-      mostImproved,
-      atRisk,
-
-      timeProgress,
+      progress,
+      categories,
+      habitsPerformance,
+      insights: {
+        overallCompletion,
+        bestHabit,
+        worstHabit,
+        mostImproved,
+        longestStreak,
+        text: insightsText,
+      },
     }
   },
 })
