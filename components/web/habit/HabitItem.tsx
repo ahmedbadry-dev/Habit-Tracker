@@ -24,6 +24,15 @@ type Habit = {
     completedAt?: string
 }
 
+function formatCompletedAt(value?: string) {
+    if (!value) return null
+
+    return new Date(value).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+    })
+}
+
 export function HabitItem({
     habit,
     onToggle,
@@ -104,10 +113,7 @@ export function HabitItem({
                             {habit.completedAt && (
                                 <div className="flex items-center gap-1">
                                     <Clock className="size-3" />
-                                    {new Date(habit.completedAt).toLocaleTimeString([], {
-                                        hour: "2-digit",
-                                        minute: "2-digit",
-                                    })}
+                                    {formatCompletedAt(habit.completedAt)}
                                 </div>
                             )}
                         </div>
