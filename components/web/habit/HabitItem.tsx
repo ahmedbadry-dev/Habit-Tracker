@@ -5,13 +5,14 @@ import { Clock, Flame, Check } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { HABIT_ICONS } from "@/schema/habitSchema"
 import { Id } from "@/convex/_generated/dataModel"
+import { HabitIconKey } from "@/schema/habitSchema"
 
 type Habit = {
     id: Id<"habits">
     title: string
     description?: string
     category: string
-    icon: string
+    icon: HabitIconKey
     color: string
     completed: boolean
     completionPercentage: number
