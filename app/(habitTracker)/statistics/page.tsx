@@ -1,4 +1,4 @@
-import OverviewPage from "@/components/web/statistics/overview/OverviewPage"
+import OverviewTab from "@/components/web/statistics/overview/OverviewTab"
 import { OverviewSkeleton } from "@/components/web/statistics/overview/OverviewSkeleton"
 import { Suspense } from "react"
 
@@ -20,7 +20,7 @@ export default async function StatisticsPage({
 
     return (
         <Suspense fallback={<OverviewSkeleton />}>
-            <OverviewPage range={range} />
+            <OverviewTab range={range} />
         </Suspense>
     )
 }
