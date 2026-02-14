@@ -1,72 +1,57 @@
+import { api } from "@/convex/_generated/api"
+import { fetchQuery } from "convex/nextjs"
+import { getToken } from "@/lib/auth-server"
+
 import { InsightCard } from "@/components/web/statistics/Insight/InsightCard"
-import { getBestHabitInsight, getOverallInsight, getRiskInsight, getStreakInsight } from "@/utils/insights/insights"
 
+export default async function InsightsTab({
+    searchParams,
+}: {
+    searchParams: Promise<{ range?: string }>
+}) {
+    const { range = "week" } = await searchParams
 
-const Insights = () => {
-    // Mock values مؤقتًا
-    const overallCompletion = 82
-    const totalCompletions = 125
-    const activeHabits = 6
+    const token = await getToken()
 
-    const bestHabit = {
-        name: "Morning Meditation",
-        percentage: 95,
-    }
+    const data = await fetchQuery(
+        api.statistics.getStatistics,
+        { range: range as any },
+        { token }
+    )
 
-    const worstHabit = {
-        name: "Exercise",
-        percentage: 50,
-    }
+    const insights = data.insights
 
-    const longestStreak = {
-        name: "Morning Meditation",
-        days: 45,
-    }
+    if (!insights) return null
 
     return (
         <div className="grid gap-8 lg:grid-cols-2">
-
             <div className="lg:col-span-2">
                 <InsightCard
                     title="Overall Performance"
-                    value={`${overallCompletion}%`}
-                    subtitle="Completion rate this month"
-                    insight={getOverallInsight(overallCompletion)}
+                    value={`${insights.overallCompletion}%`}
+                    subtitle="Completion rate"
+                    insight={insights.text.overall}
                     highlight
                 />
             </div>
 
             <InsightCard
                 title="Best Habit"
-                value={`${bestHabit.percentage}%`}
-                subtitle={bestHabit.name}
-                insight={getBestHabitInsight(
-                    bestHabit.name,
-                    bestHabit.percentage
-                )}
+                value={`${insights.bestHabit?.percentage ?? 0}%`}
+                subtitle={insights.bestHabit?.name}
+
             />
 
             <InsightCard
                 title="Needs Attention"
-                value={`${worstHabit.percentage}%`}
-                subtitle={worstHabit.name}
-                insight={getRiskInsight(
-                    worstHabit.name,
-                    worstHabit.percentage
-                )}
+                value={`${insights.worstHabit?.percentage ?? 0}%`}
+                subtitle={insights.worstHabit?.name}
             />
 
             <InsightCard
                 title="Longest Streak"
-                value={`${longestStreak.days} days`}
-                subtitle={longestStreak.name}
-                insight={getStreakInsight(longestStreak.days)}
+                value={`${insights.longestStreak} days`}
             />
-
         </div>
-
-
     )
 }
-
-export default Insights
