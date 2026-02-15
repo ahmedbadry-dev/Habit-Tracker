@@ -7,7 +7,6 @@ import { authComponent } from '../auth'
  */
 export async function getUserId(ctx: any): Promise<Id<'users'>> {
   const authUser = await authComponent.getAuthUser(ctx)
-  console.log('CONVEX AUTH USER:', authUser)
   if (!authUser) {
     throw new Error('Unauthorized')
   }
