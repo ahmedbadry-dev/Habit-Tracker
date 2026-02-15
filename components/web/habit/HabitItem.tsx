@@ -10,6 +10,7 @@ import {
     HabitIconKey,
 } from "@/schema/habitSchema"
 import { Id } from "@/convex/_generated/dataModel"
+import Link from "next/link"
 
 type Habit = {
     id: Id<"habits">
@@ -89,6 +90,10 @@ export function HabitItem({
                             }
                             className="rounded-full w-8 h-8"
                         />
+                        <Link href={`/habits/${habit.id}/edit`}>
+                            Edit
+                        </Link>
+
                     </div>
 
                     {/* Progress */}
