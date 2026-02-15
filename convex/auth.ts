@@ -8,7 +8,7 @@ import authConfig from './auth.config'
 
 // TODO: Replace sendEmail with Resend/Nodemailer later
 async function sendEmail(opts: { to: string; subject: string; text: string }) {
-  console.log('DEV EMAIL:', opts)
+  void opts
 }
 
 const siteUrl =
@@ -30,7 +30,6 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
       requireEmailVerification: false,
 
       sendResetPassword: async ({ user, url }) => {
-        console.log('Reset URL:', url)
         // Avoid awaiting in real production to reduce timing attack signals
         void sendEmail({
           to: user.email,

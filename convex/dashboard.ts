@@ -42,12 +42,14 @@ export const getDailyOverview = query({
     const weeklyHabits = habits.filter((h) => h.frequency === 'weekly')
 
     const dailyIds = new Set(dailyHabits.map((h) => h._id))
+    const habitById = new Map<Id<'habits'>, (typeof habits)[number]>(
+      habits.map((h) => [h._id, h])
+    )
 
     // early return
     if (habits.length === 0) {
       return {
         dateLabel: formatDate(todayKey),
-
         overall: { total: 0, completed: 0, percentage: 0 },
         daily: { total: 0, completed: 0, percentage: 0, perfectStreak: 0 },
         weekly: {
@@ -56,7 +58,6 @@ export const getDailyOverview = query({
           percentage: 0,
           weekStart: currentWeekStart,
         },
-
         bestStreak: null as BestStreak | null,
       }
     }
@@ -73,42 +74,92 @@ export const getDailyOverview = query({
       )
       .collect()
 
-    // -----------------------------
-    // 3) Build fast lookup maps
-    // -----------------------------
-    const completedDaysByHabit = new Map<string, Set<string>>() // habitId -> set(dateKey)
-    const completedWeeksByHabit = new Map<string, Set<string>>() // habitId -> set(weekStartKey)
+    /* ---------------------------------- */
+    /* Build Maps */
+    /* ---------------------------------- */
 
-    const dailyCompletedCountByDate = new Map<string, number>() // dateKey -> count of completed DAILY habits that day
+    // DAILY: habitId -> set(dateKey)
+    const completedDaysByHabit = new Map<Id<'habits'>, Set<string>>()
+
+    // DAILY: dateKey -> count of completed DAILY habits that day
+    const dailyCompletedCountByDate = new Map<string, number>()
+
+    // WEEKLY (numeric): habitId -> (weekStart -> sum(valueCompleted))
+    const weeklySums = new Map<Id<'habits'>, Map<string, number>>()
+
+    // WEEKLY (final): habitId -> set(weekStartKey) where week is "completed"
+    // - numeric weekly: sum >= target
+    // - boolean weekly: any completed log in the week
+    const completedWeeksByHabit = new Map<Id<'habits'>, Set<string>>()
+
+    const ensureWeekSet = (habitId: Id<'habits'>) => {
+      if (!completedWeeksByHabit.has(habitId)) {
+        completedWeeksByHabit.set(habitId, new Set())
+      }
+      return completedWeeksByHabit.get(habitId)!
+    }
 
     for (const l of logs) {
-      if (!l.completed) continue
+      const habit = habitById.get(l.habitId)
+      if (!habit) continue
 
-      // per-habit completed days
-      if (!completedDaysByHabit.has(l.habitId)) {
-        completedDaysByHabit.set(l.habitId, new Set())
+      // -----------------------------
+      // DAILY
+      // -----------------------------
+      if (habit.frequency === 'daily' && l.completed) {
+        if (!completedDaysByHabit.has(l.habitId)) {
+          completedDaysByHabit.set(l.habitId, new Set())
+        }
+        completedDaysByHabit.get(l.habitId)!.add(l.dateKey)
+
+        if (dailyIds.has(l.habitId)) {
+          dailyCompletedCountByDate.set(
+            l.dateKey,
+            (dailyCompletedCountByDate.get(l.dateKey) ?? 0) + 1
+          )
+        }
       }
-      completedDaysByHabit.get(l.habitId)!.add(l.dateKey)
 
-      // per-habit completed weeks
-      const wk = weekStartKey(l.dateKey)
-      if (!completedWeeksByHabit.has(l.habitId)) {
-        completedWeeksByHabit.set(l.habitId, new Set())
-      }
-      completedWeeksByHabit.get(l.habitId)!.add(wk)
+      // -----------------------------
+      // WEEKLY
+      // -----------------------------
+      if (habit.frequency === 'weekly') {
+        const wk = weekStartKey(l.dateKey)
 
-      // daily "perfect day" counts
-      if (dailyIds.has(l.habitId)) {
-        dailyCompletedCountByDate.set(
-          l.dateKey,
-          (dailyCompletedCountByDate.get(l.dateKey) ?? 0) + 1
-        )
+        // weekly numeric → accumulate progress
+        const hasTarget = typeof habit.target === 'number' && habit.target > 0
+        if (hasTarget) {
+          if (!weeklySums.has(l.habitId)) weeklySums.set(l.habitId, new Map())
+          const weekMap = weeklySums.get(l.habitId)!
+          weekMap.set(wk, (weekMap.get(wk) ?? 0) + (l.valueCompleted ?? 0))
+        } else {
+          // weekly boolean → a week is completed if there is ANY completed log in it
+          if (l.completed) {
+            ensureWeekSet(l.habitId).add(wk)
+          }
+        }
       }
     }
 
-    // -----------------------------
-    // 4) Completion (Daily today + Weekly this week)
-    // -----------------------------
+    /* ---------------------------------- */
+    /* For weekly numeric: mark completed weeks where sum >= target */
+    /* ---------------------------------- */
+
+    for (const [habitId, weekMap] of weeklySums) {
+      const habit = habitById.get(habitId)
+      const target = habit?.target
+      if (!habit || typeof target !== 'number' || target <= 0) continue
+
+      const set = ensureWeekSet(habitId)
+      for (const [wk, sum] of weekMap) {
+        if (sum >= target) set.add(wk)
+      }
+    }
+
+    /* ---------------------------------- */
+    /* Completion Today / This Week */
+    /* ---------------------------------- */
+
     let dailyCompletedToday = 0
     for (const h of dailyHabits) {
       const set = completedDaysByHabit.get(h._id)
@@ -136,11 +187,15 @@ export const getDailyOverview = query({
         : Math.round((weeklyCompletedThisWeek / weeklyTotal) * 100)
 
     const overallCompleted = dailyCompletedToday + weeklyCompletedThisWeek
-    const overallPct = Math.round((overallCompleted / overallTotal) * 100)
+    const overallPct =
+      overallTotal === 0
+        ? 0
+        : Math.round((overallCompleted / overallTotal) * 100)
 
-    // -----------------------------
-    // 5) Daily PERFECT streak (all daily habits completed for consecutive days)
-    // -----------------------------
+    /* ---------------------------------- */
+    /* Perfect Daily Streak (all daily habits completed each day) */
+    /* ---------------------------------- */
+
     let perfectStreak = 0
     if (dailyTotal > 0) {
       let cursor = todayKey
@@ -152,29 +207,32 @@ export const getDailyOverview = query({
       }
     }
 
-    // -----------------------------
-    // 6) Best habit current streak (Mixed: daily or weekly)
-    // -----------------------------
-    const getDailyCurrentStreak = (completedSet: Set<string> | undefined) => {
-      if (!completedSet) return 0
+    /* ---------------------------------- */
+    /* Best Mixed Streak (Daily or Weekly)
+       Keep weekly streak logic aligned with habits.ts/_utils/streak.ts:
+       streak counts from current week only if current week is completed.
+    */
+
+    const getDailyCurrentStreak = (set?: Set<string>) => {
+      if (!set) return 0
       let s = 0
       let cur = todayKey
-      while (completedSet.has(cur)) {
+      while (set.has(cur)) {
         s++
         cur = prevDateKey(cur)
       }
       return s
     }
 
-    const getWeeklyCurrentStreak = (
-      completedWeeks: Set<string> | undefined
-    ) => {
-      if (!completedWeeks) return 0
+    const getWeeklyCurrentStreak = (habitId: Id<'habits'>) => {
+      const set = completedWeeksByHabit.get(habitId)
+      if (!set) return 0
+
+      let cur = currentWeekStart
       let s = 0
-      let curWeek = currentWeekStart
-      while (completedWeeks.has(curWeek)) {
+      while (set.has(cur)) {
         s++
-        curWeek = addDays(curWeek, -7)
+        cur = addDays(cur, -7)
       }
       return s
     }
@@ -183,7 +241,7 @@ export const getDailyOverview = query({
 
     for (const h of habits) {
       if (h.frequency === 'weekly') {
-        const val = getWeeklyCurrentStreak(completedWeeksByHabit.get(h._id))
+        const val = getWeeklyCurrentStreak(h._id)
         if (!best || val > best.value) {
           best = { habitId: h._id, title: h.title, value: val, unit: 'week' }
         }

@@ -125,6 +125,12 @@ export async function computeWeeklyStreak(
 ) {
   const { userId, habitId, upToDateKey } = params
 
+  const habit = await ctx.db.get(habitId)
+  const hasTarget =
+    habit?.frequency === 'weekly' &&
+    typeof habit.target === 'number' &&
+    habit.target > 0
+
   const logs = await ctx.db
     .query('habitLogs')
     .withIndex('by_userId_habitId_dateKey', (q) =>
@@ -132,10 +138,26 @@ export async function computeWeeklyStreak(
     )
     .collect()
 
-  // Convert completed logs to weekStart keys
-  const completedWeeks = logs
-    .filter((l) => l.completed)
-    .map((l) => weekStartKey(l.dateKey))
+  let completedWeeks: string[]
+
+  if (hasTarget) {
+    const weekSums = new Map<string, number>()
+    for (const log of logs) {
+      const value = log.valueCompleted ?? 0
+      if (value <= 0) continue
+      const wk = weekStartKey(log.dateKey)
+      weekSums.set(wk, (weekSums.get(wk) ?? 0) + value)
+    }
+
+    completedWeeks = Array.from(weekSums.entries())
+      .filter(([, sum]) => sum >= (habit!.target as number))
+      .map(([wk]) => wk)
+  } else {
+    // Boolean weekly: completed if there is any completed log in week
+    completedWeeks = logs
+      .filter((l) => l.completed)
+      .map((l) => weekStartKey(l.dateKey))
+  }
 
   const weekSet = new Set(completedWeeks)
 

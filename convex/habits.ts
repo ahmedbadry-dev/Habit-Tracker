@@ -54,12 +54,12 @@ export const createHabit = mutation({
 export const toggleHabit = mutation({
   args: {
     habitId: v.id('habits'),
-    dateKey: v.string(), // YYYY-MM-DD
     valueCompleted: v.optional(v.number()),
     completed: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const userId = await getOrCreateUserId(ctx)
+    const todayKey = new Date().toISOString().slice(0, 10)
 
     const habit = await ctx.db.get(args.habitId)
     if (!habit || habit.userId !== userId) {
@@ -72,44 +72,52 @@ export const toggleHabit = mutation({
         q
           .eq('userId', userId)
           .eq('habitId', args.habitId)
-          .eq('dateKey', args.dateKey)
+          .eq('dateKey', todayKey)
       )
       .unique()
 
+    // داخل handler بعد ما تجيب habit و existing
+
     const hasTarget = typeof habit.target === 'number' && habit.target > 0
+
+    // ✅ لو weekly + target => ممنوع toggle
+    if (habit.frequency === 'weekly' && hasTarget) {
+      throw new Error('Weekly target habits use bumpHabitProgress')
+    }
 
     let nextValue: number | undefined
     let nextCompleted: boolean
 
-    // ----------------------
-    // NUMERIC HABIT
-    // ----------------------
     if (hasTarget) {
+      // Daily numeric
       const target = habit.target!
       const currentValue = existing?.valueCompleted ?? 0
 
-      // لو FE بعت value → استخدمها، غير كدا سيب الحالية
-      nextValue =
-        typeof args.valueCompleted === 'number'
-          ? args.valueCompleted
-          : currentValue
+      // If UI toggles via checkbox for daily numeric habits,
+      // map checked -> target and unchecked -> 0.
+      if (typeof args.completed === 'boolean') {
+        nextValue = args.completed ? target : 0
+      } else {
+        nextValue =
+          typeof args.valueCompleted === 'number'
+            ? args.valueCompleted
+            : currentValue
+      }
 
-      // (اختياري) لو عايز strict domain rule:
-      // منع الزيادة عن target نفسه
-      // nextValue = Math.min(nextValue, target)
+      // ✅ normalize + abuse cap
+      if (!Number.isFinite(nextValue)) nextValue = 0
+      if (nextValue < 0) nextValue = 0
+      if (habit.target && nextValue > habit.target * 10) {
+        nextValue = habit.target * 10
+      }
 
+      // completed هنا “حقق target اليوم” (لـ daily numeric)
       nextCompleted = nextValue >= target
-    }
-
-    // ----------------------
-    // BOOLEAN HABIT
-    // ----------------------
-    else {
+    } else {
+      // Boolean (daily/weekly)
       const currentCompleted = existing?.completed ?? false
-
       nextCompleted =
         typeof args.completed === 'boolean' ? args.completed : !currentCompleted
-
       nextValue = undefined
     }
 
@@ -119,7 +127,7 @@ export const toggleHabit = mutation({
       await ctx.db.insert('habitLogs', {
         userId,
         habitId: args.habitId,
-        dateKey: args.dateKey,
+        dateKey: todayKey,
         valueCompleted: nextValue,
         completed: nextCompleted,
         completedAt: nextCompleted ? now : undefined,
@@ -141,12 +149,12 @@ export const toggleHabit = mutation({
         ? await computeWeeklyStreak(ctx, {
             userId,
             habitId: args.habitId,
-            upToDateKey: args.dateKey,
+            upToDateKey: todayKey,
           })
         : await computeDailyStreak(ctx, {
             userId,
             habitId: args.habitId,
-            upToDateKey: args.dateKey,
+            upToDateKey: todayKey,
           })
 
     // ----------------------
@@ -166,7 +174,7 @@ export const toggleHabit = mutation({
 
     return {
       habitId: args.habitId,
-      dateKey: args.dateKey,
+      dateKey: todayKey,
       completed: nextCompleted,
       valueCompleted: nextValue,
       completionPercentage,
@@ -180,9 +188,10 @@ export const toggleHabit = mutation({
 // GET TODAY HABITS
 // ----------------------
 export const getTodayHabits = query({
-  args: { dateKey: v.string() },
-  handler: async (ctx, args) => {
+  args: {},
+  handler: async (ctx) => {
     const userId = await getUserId(ctx)
+    const todayKey = new Date().toISOString().slice(0, 10)
 
     // 1) habits (non-archived)
     const habits = await ctx.db
@@ -196,14 +205,14 @@ export const getTodayHabits = query({
     const logsToday = await ctx.db
       .query('habitLogs')
       .withIndex('by_userId_dateKey', (q) =>
-        q.eq('userId', userId).eq('dateKey', args.dateKey)
+        q.eq('userId', userId).eq('dateKey', todayKey)
       )
       .collect()
 
     const todayLogMap = new Map(logsToday.map((l) => [l.habitId, l]))
 
-    // 3) logs window (last 400 days) — enough for streak/portfolio
-    const minKey = addDays(args.dateKey, -400)
+    // 3) logs window (last 400 days)
+    const minKey = addDays(todayKey, -400)
 
     const windowLogs = await ctx.db
       .query('habitLogs')
@@ -218,7 +227,10 @@ export const getTodayHabits = query({
       logsByHabit.get(log.habitId)!.push(log)
     }
 
-    // helpers for local streak
+    // -----------------------------
+    // Streak Helpers
+    // -----------------------------
+
     const dailyCurrentStreak = (completedSet: Set<string>, upTo: string) => {
       let streak = 0
       let cur = upTo
@@ -267,43 +279,102 @@ export const getTodayHabits = query({
       return best
     }
 
-    // 4) build response
+    // -----------------------------
+    // Build response
+    // -----------------------------
+
     return habits.map((h) => {
       const todayLog = todayLogMap.get(h._id)
       const habitLogs = logsByHabit.get(h._id) ?? []
 
       const hasTarget = typeof h.target === 'number' && h.target > 0
+      const isWeekly = h.frequency === 'weekly'
 
-      const valueCompleted =
-        todayLog?.valueCompleted ?? (hasTarget ? 0 : undefined)
+      const weekStart = weekStartKey(todayKey)
+      const weekEnd = addDays(weekStart, 6)
 
-      const completed = todayLog?.completed ?? false
+      // -----------------------------
+      // WEEK SUM (for weekly numeric)
+      // -----------------------------
+      let weekSum = 0
 
-      const completionPercentage = hasTarget
-        ? Math.max(
-            0,
-            Math.min(100, Math.round(((valueCompleted ?? 0) / h.target!) * 100))
-          )
-        : completed
-          ? 100
-          : 0
+      if (isWeekly && hasTarget) {
+        for (const l of habitLogs) {
+          if (!l.valueCompleted) continue
+          if (l.dateKey >= weekStart && l.dateKey <= weekEnd) {
+            weekSum += l.valueCompleted
+          }
+        }
+      }
 
-      // streak local (fast)
+      // -----------------------------
+      // Completion logic
+      // -----------------------------
+      let completed: boolean
+      let valueCompleted: number | undefined
+      let completionPercentage: number
+
+      if (isWeekly && hasTarget) {
+        valueCompleted = weekSum
+        completed = weekSum >= h.target!
+        completionPercentage = Math.max(
+          0,
+          Math.min(100, Math.round((weekSum / h.target!) * 100))
+        )
+      } else {
+        valueCompleted = todayLog?.valueCompleted ?? (hasTarget ? 0 : undefined)
+
+        completed = todayLog?.completed ?? false
+
+        completionPercentage = hasTarget
+          ? Math.max(
+              0,
+              Math.min(
+                100,
+                Math.round(((valueCompleted ?? 0) / h.target!) * 100)
+              )
+            )
+          : completed
+            ? 100
+            : 0
+      }
+
+      // -----------------------------
+      // Streak
+      // -----------------------------
       const completedDays = habitLogs
         .filter((l) => l.completed)
         .map((l) => l.dateKey)
+
       const completedSet = new Set(completedDays)
 
       let currentStreak = 0
       let longestStreak = 0
 
-      if (h.frequency === 'weekly') {
-        const completedWeeks = completedDays.map((d) => weekStartKey(d))
+      if (isWeekly) {
+        let completedWeeks: string[]
+
+        if (hasTarget && typeof h.target === 'number' && h.target > 0) {
+          const weekSums = new Map<string, number>()
+          for (const l of habitLogs) {
+            const value = l.valueCompleted ?? 0
+            if (value <= 0) continue
+            const wk = weekStartKey(l.dateKey)
+            weekSums.set(wk, (weekSums.get(wk) ?? 0) + value)
+          }
+
+          completedWeeks = Array.from(weekSums.entries())
+            .filter(([, sum]) => sum >= h.target!)
+            .map(([wk]) => wk)
+        } else {
+          completedWeeks = completedDays.map((d) => weekStartKey(d))
+        }
+
         const weekSet = new Set(completedWeeks)
-        currentStreak = weeklyCurrentStreak(weekSet, args.dateKey)
+        currentStreak = weeklyCurrentStreak(weekSet, todayKey)
         longestStreak = weeklyLongestStreak(completedWeeks)
       } else {
-        currentStreak = dailyCurrentStreak(completedSet, args.dateKey)
+        currentStreak = dailyCurrentStreak(completedSet, todayKey)
         longestStreak = dailyLongestStreak(completedDays)
       }
 
@@ -324,6 +395,12 @@ export const getTodayHabits = query({
         completionPercentage,
         streak: currentStreak,
         longestStreak,
+
+        // 🔥 Weekly helpers للـ UI
+        weekStart: isWeekly ? weekStart : undefined,
+        weekEnd: isWeekly ? weekEnd : undefined,
+        todayValue: todayLog?.valueCompleted ?? 0,
+
         completedAt: todayLog?.completedAt
           ? new Date(todayLog.completedAt).toISOString()
           : undefined,
@@ -454,5 +531,97 @@ export const getHabitById = query({
     }
 
     return habit
+  },
+})
+
+export const bumpHabitProgress = mutation({
+  args: {
+    habitId: v.id('habits'),
+    delta: v.number(), // +1 or -1
+  },
+  handler: async (ctx, args) => {
+    const userId = await getOrCreateUserId(ctx)
+    const todayKey = new Date().toISOString().slice(0, 10)
+
+    const habit = await ctx.db.get(args.habitId)
+    if (!habit || habit.userId !== userId) {
+      throw new Error('Habit not found')
+    }
+
+    const hasTarget = typeof habit.target === 'number' && habit.target > 0
+
+    if (!hasTarget) {
+      throw new Error('bumpHabitProgress is for target habits only')
+    }
+
+    const existing = await ctx.db
+      .query('habitLogs')
+      .withIndex('by_userId_habitId_dateKey', (q) =>
+        q
+          .eq('userId', userId)
+          .eq('habitId', args.habitId)
+          .eq('dateKey', todayKey)
+      )
+      .unique()
+
+    const current = existing?.valueCompleted ?? 0
+
+    // ✅ Clamp strictly inside target range
+    const target = habit.target!
+
+    const nextValue = Math.max(0, Math.min(current + args.delta, target))
+
+    const now = Date.now()
+
+    const isCompleted = nextValue >= target
+
+    if (!existing) {
+      await ctx.db.insert('habitLogs', {
+        userId,
+        habitId: args.habitId,
+        dateKey: todayKey,
+        valueCompleted: nextValue,
+        completed: isCompleted,
+        completedAt: isCompleted ? now : undefined,
+        createdAt: now,
+      })
+    } else {
+      await ctx.db.patch(existing._id, {
+        valueCompleted: nextValue,
+        completed: isCompleted,
+        completedAt: isCompleted ? now : undefined,
+      })
+    }
+
+    // -----------------------------
+    // 🔥 Streak (server source of truth)
+    // -----------------------------
+    const streakData =
+      habit.frequency === 'weekly'
+        ? await computeWeeklyStreak(ctx, {
+            userId,
+            habitId: args.habitId,
+            upToDateKey: todayKey,
+          })
+        : await computeDailyStreak(ctx, {
+            userId,
+            habitId: args.habitId,
+            upToDateKey: todayKey,
+          })
+
+    // -----------------------------
+    // 📊 Completion %
+    // -----------------------------
+    const completionPercentage = Math.round((nextValue / target) * 100)
+
+    return {
+      habitId: args.habitId,
+      dateKey: todayKey,
+      valueCompleted: nextValue,
+      completed: isCompleted,
+      completionPercentage,
+      currentStreak: streakData.currentStreak,
+      longestStreak: streakData.longestStreak,
+    }
   },
 })

@@ -7,75 +7,107 @@ import { useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Id } from "@/convex/_generated/dataModel"
 
+function clamp(n: number, min: number, max: number) {
+    return Math.max(min, Math.min(max, n))
+}
+
 export default function DashboardClient({
-    todayKey,
+    todayKey: _todayKey,
 }: {
     todayKey: string
 }) {
-    /* ------------------ Sync User Once ------------------ */
     const syncUser = useMutation(api.users.syncUser)
 
     useEffect(() => {
         syncUser().catch(() => { })
     }, [syncUser])
 
-    /* ------------------ Query ------------------ */
-    const habits = useQuery(
-        api.habits.getTodayHabits,
-        todayKey ? { dateKey: todayKey } : "skip"
-    )
+    const habits = useQuery(api.habits.getTodayHabits, {})
 
-    /* ------------------ Mutation ------------------ */
-    const toggleHabitMutation = useMutation(api.habits.toggleHabit)
+    /* ---------------------------- */
+    /* Mutations */
+    /* ---------------------------- */
 
-    const toggleHabit = toggleHabitMutation.withOptimisticUpdate(
-        (localStore, args) => {
-            const current = localStore.getQuery(
-                api.habits.getTodayHabits,
-                { dateKey: todayKey }
-            )
+    const toggleHabit = useMutation(
+        api.habits.toggleHabit
+    ).withOptimisticUpdate((localStore, args) => {
+        const current = localStore.getQuery(api.habits.getTodayHabits, {})
 
-            if (!current) return
+        if (!current) return
 
-            localStore.setQuery(
-                api.habits.getTodayHabits,
-                { dateKey: todayKey },
-                current.map((h) => {
-                    if (h.id !== args.habitId) return h
+        localStore.setQuery(
+            api.habits.getTodayHabits,
+            {},
+            current.map((h) => {
+                if (h.id !== args.habitId) return h
 
-                    const isNumeric =
-                        typeof h.target === "number" && h.target > 0
+                const nextCompleted =
+                    typeof args.completed === "boolean"
+                        ? args.completed
+                        : !h.completed
 
-                    const nextCompleted = !h.completed
+                return {
+                    ...h,
+                    completed: nextCompleted,
+                    completionPercentage: nextCompleted ? 100 : 0,
+                }
+            })
+        )
+    })
 
-                    return {
-                        ...h,
-                        completed: nextCompleted,
 
-                        completionPercentage: isNumeric
-                            ? args.valueCompleted !== undefined
-                                ? Math.min(
-                                    100,
-                                    Math.round(
-                                        (args.valueCompleted / (h.target ?? 1)) * 100
-                                    )
-                                )
-                                : h.completionPercentage
-                            : nextCompleted
-                                ? 100
-                                : 0
-                        // 🚫 مفيش لعب في streak
-                    }
-                })
-            )
 
-        }
-    )
+    const bumpHabitProgress = useMutation(
+        api.habits.bumpHabitProgress
+    ).withOptimisticUpdate((localStore, args) => {
+        const current = localStore.getQuery(api.habits.getTodayHabits, {})
 
-    /* ------------------ UI States ------------------ */
-    if (!habits) {
-        return <div>Loading...</div>
-    }
+        if (!current) return
+
+        localStore.setQuery(
+            api.habits.getTodayHabits,
+            {},
+            current.map((h) => {
+                if (h.id !== args.habitId) return h
+
+                const prevToday = h.todayValue ?? 0
+                const prevWeekSum = h.valueCompleted ?? 0
+
+                const newToday = Math.max(0, prevToday + args.delta)
+                const newWeekSum = Math.max(
+                    0,
+                    prevWeekSum + args.delta
+                )
+
+                const pct =
+                    typeof h.target === "number" && h.target > 0
+                        ? clamp(
+                            Math.round((newWeekSum / h.target) * 100),
+                            0,
+                            100
+                        )
+                        : 0
+
+
+                return {
+                    ...h,
+                    todayValue: newToday,
+                    valueCompleted: newWeekSum,
+                    completionPercentage: pct,
+                    completed:
+                        typeof h.target === "number"
+                            ? newWeekSum >= h.target
+                            : false,
+                }
+            })
+        )
+    })
+
+    /* ---------------------------- */
+    /* Loading & Empty */
+    /* ---------------------------- */
+
+    if (!habits) return <div>Loading...</div>
 
     if (habits.length === 0) {
         return (
@@ -97,36 +129,102 @@ export default function DashboardClient({
         )
     }
 
-    /* ------------------ Toggle Handler ------------------ */
+    /* ---------------------------- */
+    /* Handlers */
+    /* ---------------------------- */
+
+    // ✅ Boolean habits
     const handleToggle = async (
         id: Id<"habits">,
         checked: boolean
     ) => {
-        const habit = habits.find((h) => h.id === id)
-        if (!habit) return
-
-        const isNumeric =
-            typeof habit.target === "number" && habit.target > 0
-
         await toggleHabit({
             habitId: id,
-            dateKey: todayKey,
-            ...(isNumeric
-                ? { valueCompleted: checked ? habit.target : 0 }
-                : { completed: checked }),
+            completed: checked,
         })
     }
 
-    /* ------------------ Render ------------------ */
+
+    // ✅ Weekly + / − handler
+    const handleWeeklyChange = async (
+        id: Id<"habits">,
+        delta: number
+    ) => {
+        const current = habits.find((h) => h.id === id)
+        if (!current) return
+
+        const target =
+            typeof current.target === "number" ? current.target : 0
+
+        if (target <= 0) return
+
+        const todayValue = current.todayValue ?? 0
+        const weekSum = current.valueCompleted ?? 0
+
+        // 🚫 منع الزيادة فوق target
+        if (delta > 0 && weekSum >= target) return
+
+        // 🚫 منع النزول تحت صفر
+        if (delta < 0 && todayValue <= 0) return
+
+        await bumpHabitProgress({
+            habitId: id,
+            delta,
+        })
+    }
+
+    const dailyHabits = habits.filter((habit) => habit.frequency === "daily")
+    const weeklyHabits = habits.filter((habit) => habit.frequency === "weekly")
+
+    /* ---------------------------- */
+    /* Render */
+    /* ---------------------------- */
+
     return (
         <div className="space-y-6">
-            {habits.map((habit) => (
-                <HabitItem
-                    key={habit.id}
-                    habit={habit}
-                    onToggle={handleToggle}
-                />
-            ))}
+            <section className="space-y-3">
+                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                    Daily Habits
+                </h2>
+                {dailyHabits.length === 0 ? (
+                    <Card className="p-4 text-sm text-muted-foreground">
+                        No daily habits
+                    </Card>
+                ) : (
+                    <div className="space-y-4">
+                        {dailyHabits.map((habit) => (
+                            <HabitItem
+                                key={habit.id}
+                                habit={habit}
+                                onToggle={handleToggle}
+                                onWeeklyChange={handleWeeklyChange}
+                            />
+                        ))}
+                    </div>
+                )}
+            </section>
+
+            <section className="space-y-3">
+                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                    Weekly Habits
+                </h2>
+                {weeklyHabits.length === 0 ? (
+                    <Card className="p-4 text-sm text-muted-foreground">
+                        No weekly habits
+                    </Card>
+                ) : (
+                    <div className="space-y-4">
+                        {weeklyHabits.map((habit) => (
+                            <HabitItem
+                                key={habit.id}
+                                habit={habit}
+                                onToggle={handleToggle}
+                                onWeeklyChange={handleWeeklyChange}
+                            />
+                        ))}
+                    </div>
+                )}
+            </section>
         </div>
     )
 }
