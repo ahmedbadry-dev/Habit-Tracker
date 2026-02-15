@@ -354,12 +354,24 @@ export const updateHabit = mutation({
     ),
   },
   handler: async (ctx, args) => {
-    const userId = await getOrCreateUserId(ctx)
+    const userId = await getUserId(ctx) // 🔥 fixed
 
     const habit = await ctx.db.get(args.habitId)
-
     if (!habit || habit.userId !== userId) {
       throw new Error('Habit not found')
+    }
+
+    // Server-side validation
+    if (args.target !== undefined && args.target < 1) {
+      throw new Error('Invalid target value')
+    }
+
+    const nextFrequency = args.frequency ?? habit.frequency
+    let nextTarget = args.target ?? habit.target
+
+    // Domain rule
+    if (nextFrequency === 'daily' && !nextTarget) {
+      nextTarget = 1
     }
 
     await ctx.db.patch(args.habitId, {
@@ -369,9 +381,9 @@ export const updateHabit = mutation({
       ...(args.icon !== undefined && { icon: args.icon }),
       ...(args.color !== undefined && { color: args.color }),
       ...(args.frequency !== undefined && { frequency: args.frequency }),
-      ...(args.target !== undefined && { target: args.target }),
       ...(args.unit !== undefined && { unit: args.unit }),
       ...(args.reminders !== undefined && { reminders: args.reminders }),
+      target: nextTarget,
     })
 
     return { success: true }
