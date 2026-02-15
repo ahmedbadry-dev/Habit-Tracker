@@ -107,6 +107,7 @@ export default function HeroSection({
     return (
         <Card
             className="
+
         bg-linear-to-br
         from-background
         via-background
@@ -114,17 +115,18 @@ export default function HeroSection({
         border-border/40
         shadow-sm
         animate-in fade-in duration-500
+        gap-2
       "
         >
             <CardHeader>
-                <div className="flex flex-col-reverse gap-4 md:flex-row md:gap-0 md:justify-between md:items-start">
-                    <div className="space-y-3">
+                <div className="flex flex-col-reverse gap-4 md:flex-row md:gap-0 md:justify-between md:items-start md:mb-4">
+                    <div className="space-y-3 w-full">
                         <h1 className="text-2xl lg:text-4xl font-medium tracking-tight">
                             {greeting}
                             {firstName ? `, ${firstName}` : ""}!
                         </h1>
 
-                        <CardDescription className="flex flex-col md:flex-row gap-6 md:items-center">
+                        <CardDescription className="w-full flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
                             <p className="text-base md:text-lg lg:text-xl text-primary/80">
                                 {motivation}
                             </p>
@@ -137,17 +139,22 @@ export default function HeroSection({
                             </div>
                         </CardDescription>
                     </div>
+                </div>
+            </CardHeader>
 
-                    {/* Separate badges */}
-                    <div className="flex flex-wrap gap-2 justify-end">
+            <CardContent className="space-y-4">
+                {/* Separate badges */}
+                <div className="flex flex-col gap-2 justify-end ">
+                    <div className="flex">
                         <Badge
                             className="
-                flex items-center gap-2
-                px-4 py-2
-                bg-primary/90 text-primary-foreground
-                hover:bg-primary
-                transition-all duration-200
-              "
+                                flex-1
+                                flex items-center gap-2
+                                px-4 py-2
+                                bg-primary/90 text-primary-foreground
+                                hover:bg-primary
+                                transition-all duration-200
+                                    "
                         >
                             <TrophyIcon className="size-4" />
                             <span className="text-xs md:text-sm">
@@ -155,9 +162,11 @@ export default function HeroSection({
                             </span>
                         </Badge>
 
+                    </div>
+                    <div className="flex">
                         <Badge
                             variant="secondary"
-                            className="flex items-center gap-2 px-4 py-2"
+                            className="flex items-center gap-2 px-4 py-2 flex-1"
                             title={overview.bestStreak?.title ?? undefined}
                         >
                             <Flame className="size-4" />
@@ -168,7 +177,7 @@ export default function HeroSection({
 
                         <Badge
                             variant="outline"
-                            className="flex items-center gap-2 px-4 py-2"
+                            className="flex items-center gap-2 px-4 py-2 flex-1"
                         >
                             <Repeat className="size-4" />
                             <span className="text-xs md:text-sm">
@@ -177,9 +186,7 @@ export default function HeroSection({
                         </Badge>
                     </div>
                 </div>
-            </CardHeader>
 
-            <CardContent className="space-y-4">
                 {/* Main overall */}
                 <div
                     className="
@@ -197,10 +204,10 @@ export default function HeroSection({
                         <ProgressRing percentage={overallPct} />
 
                         <div>
-                            <p className="text-lg md:text-2xl font-medium">
+                            <p className="text-base md:text-2xl font-medium">
                                 {overallCompleted} of {overallTotal} completed
                             </p>
-                            <p className="text-muted-foreground">
+                            <p className="text-xs md:text-base text-muted-foreground">
                                 {overallPct}% completed
                             </p>
                         </div>
