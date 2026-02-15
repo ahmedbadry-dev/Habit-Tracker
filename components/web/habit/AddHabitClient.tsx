@@ -64,7 +64,7 @@ export default function AddHabitClient() {
     }
 
     return (
-        <>
+        <div className="p-4 space-y-4">
             <Header>
                 <div className="flex gap-6 items-center">
                     <Link
@@ -93,6 +93,6 @@ export default function AddHabitClient() {
                 control={control}
                 remindersEnabled={remindersEnabled}
             />
-        </>
+        </div>
     )
 }
