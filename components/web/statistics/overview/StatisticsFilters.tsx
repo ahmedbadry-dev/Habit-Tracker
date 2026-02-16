@@ -21,7 +21,7 @@ export default function StatisticsFilter() {
 
     return (
         <Select value={currentRange} onValueChange={handleChange}>
-            <SelectTrigger className="w-40 transition-all duration-200">
+            <SelectTrigger className="w-fit transition-all duration-200">
                 <SelectValue />
             </SelectTrigger>
             <SelectContent>
