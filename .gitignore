@@ -21,7 +21,7 @@ build/
 # Convex
 # ------------------------------
 .convex/
-convex/_generated/
+
 
 # ------------------------------
 # Environment Variables
