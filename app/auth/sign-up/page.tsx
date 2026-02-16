@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Loader2 } from "lucide-react"
+import { toast } from "sonner"
 
 export default function SignUpPage() {
     const router = useRouter()
@@ -35,10 +36,10 @@ export default function SignUpPage() {
         })
 
         if (error) {
-            alert(error.message)
+            toast.error(error.message)
             return
         }
-
+        toast.success('Account created successfully')
         router.push("/")
     }
 

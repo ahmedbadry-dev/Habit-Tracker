@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card"
 import { Loader2 } from "lucide-react"
+import { toast } from "sonner"
 
 export default function SignInPage() {
     const router = useRouter()
@@ -34,11 +35,11 @@ export default function SignInPage() {
 
         if (error) {
             // replace with toast
-            alert(error.message)
+            toast.error(error.message)
             return
         }
-
-        router.push("/")
+        toast.success('Welcome back')
+        router.push("/", { scroll: false })
     }
 
     return (

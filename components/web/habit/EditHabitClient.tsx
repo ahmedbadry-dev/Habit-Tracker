@@ -12,6 +12,7 @@ import { Button, buttonVariants } from "@/components/ui/button"
 import { Header } from "../header/Header"
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
+import { toast } from "sonner"
 
 type Props = {
     preloadedHabit: Preloaded<typeof api.habits.getHabitById>
@@ -44,7 +45,7 @@ export default function EditHabitClient({ preloadedHabit }: Props) {
             habitId: habit._id,
             ...data,
         })
-
+        toast.success("Habit updated successfully 🎉")
         router.push("/")
     }
 
