@@ -10,21 +10,21 @@ import Link from "next/link"
 const StatisticsLayout = ({ children }: { children: React.ReactNode }) => {
     return (
         <div className="p-4 space-y-4 ">
-            <Header>
-                <div className="flex gap-6 items-center">
+            <Header px={0}>
+                <div className="flex gap-2 md:gap-6 items-center">
                     <div>
                         <Link href={'/'} className={buttonVariants({ variant: "outline" })}>
                             <ArrowLeft className="size-4 text-muted-foreground" />
                         </Link>
                     </div>
                     <div className="relative">
-                        <p className="text-2xl font-medium">Statistics</p>
+                        <p className="text-xl md:text-2xl font-medium">Statistics</p>
                         <span className="absolute w-[50%] h-1 bg-primary -bottom-2 rounded"></span>
                     </div>
                 </div>
                 {/* select filtration */}
-                <div className="flex items-center gap-4">
-                    <Suspense fallback={<div className="h-9 w-40 rounded-md bg-muted/50" />}>
+                <div className="flex items-center gap-2 md:gap-4">
+                    <Suspense fallback={<div className="h-9 w-fit rounded-md bg-muted/50" />}>
                         <StatisticsFilter />
                     </Suspense>
                     <div className="p-2 rounded-full cursor-pointer border-2 border-popover-foreground/30 hover:bg-muted">
