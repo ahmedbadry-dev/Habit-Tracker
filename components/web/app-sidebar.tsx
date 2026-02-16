@@ -1,4 +1,5 @@
 "use client"
+import { useQuery } from "convex/react"
 import {
     Sidebar,
     SidebarContent,
@@ -11,52 +12,49 @@ import {
 import {
     IconChartBar,
     IconDashboard,
-    IconFolder,
     IconInnerShadowTop,
     IconListDetails,
-    IconUsers,
+    IconSettings
 } from "@tabler/icons-react"
 
 import { NavMain } from "./nav-main"
 import { NavUser } from "./nav-user"
+import { useAppLanguage } from "@/hooks/useAppLanguage"
+import { api } from "@/convex/_generated/api"
 
-const data = {
-    user: {
-        name: "shadcn",
-        email: "m@example.com",
-        avatar: "/avatars/shadcn.jpg",
-    },
-    navMain: [
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+    const { dict } = useAppLanguage()
+    const profile = useQuery(api.users.getCurrentUserProfile)
+
+    const user = {
+        name: profile?.name ?? "User",
+        email: profile?.email ?? "loading...",
+        avatar: `${profile?.name.slice(0, 2)}`,
+    }
+
+    const navMain = [
         {
-            title: "Dashboard",
+            title: dict.nav.dashboard,
             url: "/",
             icon: IconDashboard,
         },
         {
-            title: "Add Habit",
+            title: dict.nav.addHabit,
             url: "/add-habit",
             icon: IconListDetails,
         },
         {
-            title: "Statistics",
+            title: dict.nav.statistics,
             url: "/statistics",
             icon: IconChartBar,
         },
         {
-            title: "Projects",
-            url: "#",
-            icon: IconFolder,
+            title: dict.nav.settings,
+            url: "/settings",
+            icon: IconSettings,
         },
-        {
-            title: "Team",
-            url: "#",
-            icon: IconUsers,
-        },
-    ],
+    ]
 
-}
-
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     return (
         <Sidebar collapsible="offcanvas" {...props}>
             <SidebarHeader>
@@ -68,17 +66,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         >
                             <a href="#">
                                 <IconInnerShadowTop className="size-5!" />
-                                <span className="text-base font-semibold">Acme Inc.</span>
+                                <span className="text-base font-semibold">Ahmed Badry</span>
                             </a>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>
             </SidebarHeader>
             <SidebarContent>
-                <NavMain items={data.navMain} />
+                <NavMain items={navMain} />
             </SidebarContent>
             <SidebarFooter>
-                <NavUser user={data.user} />
+                <NavUser user={user} />
             </SidebarFooter>
         </Sidebar>
     )

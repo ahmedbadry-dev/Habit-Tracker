@@ -66,4 +66,39 @@ export default defineSchema({
     .index('by_habitId_dateKey', ['habitId', 'dateKey'])
     .index('by_userId_habitId_dateKey', ['userId', 'habitId', 'dateKey'])
     .index('by_userId_habitId_completed', ['userId', 'habitId', 'completed']),
+
+  // =========================
+  // user Settings
+  // =========================
+  userSettings: defineTable({
+    userId: v.id('users'),
+
+    pushEnabled: v.boolean(),
+    defaultReminderTime: v.string(), // "09:00"
+
+    language: v.union(v.literal('en'), v.literal('ar')),
+
+    weekStartsOn: v.union(
+      v.literal('monday'),
+      v.literal('sunday'),
+      v.literal('saturday')
+    ),
+
+    updatedAt: v.number(), // server timestamp
+  }).index('by_userId', ['userId']),
+
+  // =========================
+  // Push notification subscriptions
+  // =========================
+  pushSubscriptions: defineTable({
+    userId: v.id('users'),
+    endpoint: v.string(),
+    p256dh: v.string(),
+    auth: v.string(),
+    userAgent: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_userId', ['userId'])
+    .index('by_userId_endpoint', ['userId', 'endpoint']),
 })

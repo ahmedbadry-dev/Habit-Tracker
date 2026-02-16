@@ -30,6 +30,13 @@ export const createHabit = mutation({
   },
   handler: async (ctx, args) => {
     const userId = await getOrCreateUserId(ctx)
+    const settings = await ctx.db
+      .query('userSettings')
+      .withIndex('by_userId', (q) => q.eq('userId', userId))
+      .unique()
+
+    const reminderTime =
+      args.reminders.time ?? settings?.defaultReminderTime ?? '09:00'
 
     return await ctx.db.insert('habits', {
       userId,
@@ -41,7 +48,10 @@ export const createHabit = mutation({
       frequency: args.frequency,
       target: args.target,
       unit: args.unit,
-      reminders: args.reminders,
+      reminders: {
+        enabled: args.reminders.enabled,
+        time: args.reminders.enabled ? reminderTime : undefined,
+      },
       archived: false,
       createdAt: Date.now(),
     })
