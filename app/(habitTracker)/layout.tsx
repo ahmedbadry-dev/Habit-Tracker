@@ -1,8 +1,10 @@
+import PageShellSkeleton from "@/components/layout/PageShellSkeleton"
 import PageTransition from "@/components/layout/PageTransition"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/web/app-sidebar"
 import { AuthRequiredModal } from "@/components/web/auth/AuthRequiredModal"
 import { SiteHeader } from "@/components/web/site-header"
+import { Suspense } from "react"
 
 const HabitLayout = ({ children }: { children: React.ReactNode }) => {
     return (
@@ -21,7 +23,9 @@ const HabitLayout = ({ children }: { children: React.ReactNode }) => {
                     <PageTransition>
                         <main className="flex-1">
                             <div className="@container/main max-w-5xl m-auto">
-                                {children}
+                                <Suspense fallback={<PageShellSkeleton />}>
+                                    {children}
+                                </Suspense>
                             </div>
                         </main>
                     </PageTransition>
