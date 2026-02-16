@@ -9,8 +9,10 @@ import { Resend } from 'resend'
 import { action } from './_generated/server'
 
 // TODO: Replace sendEmail with Resend/Nodemailer later
-
-const resend = new Resend(process.env.RESEND_API_KEY!)
+if (!process.env.RESEND_API_KEY) {
+  throw new Error('Missing RESEND_API_KEY')
+}
+const resend = new Resend(process.env.RESEND_API_KEY)
 
 async function sendEmail(opts: { to: string; subject: string; html: string }) {
   await resend.emails.send({
