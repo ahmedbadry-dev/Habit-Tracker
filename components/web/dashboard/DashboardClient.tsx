@@ -6,6 +6,7 @@ import { HabitItem } from "@/components/web/habit/HabitItem"
 import { useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Id } from "@/convex/_generated/dataModel"
+import { Loader2 } from "lucide-react"
 
 function clamp(n: number, min: number, max: number) {
     return Math.max(min, Math.min(max, n))
@@ -107,7 +108,14 @@ export default function DashboardClient({
     /* Loading & Empty */
     /* ---------------------------- */
 
-    if (!habits) return <div>Loading...</div>
+    if (!habits) {
+        return (
+            <div className="w-full h-full flex justify-center items-center">
+                <Loader2 className="size-4 text-primary animate-spin" />
+            </div>
+        )
+    }
+
 
     if (habits.length === 0) {
         return (

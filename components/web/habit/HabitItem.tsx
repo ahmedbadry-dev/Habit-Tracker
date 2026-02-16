@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator"
 import { formatTime } from "@/utils/formatDate"
 import CelebrationBurst from "@/components/layout/CelebrationBurst"
 import HabitItemClient from "./HabitItemClient"
+import { buttonVariants } from "@/components/ui/button"
 
 type Habit = {
     id: Id<"habits">
@@ -66,33 +67,32 @@ export function HabitItem({
         CATEGORY_CONFIG[habit.category as keyof typeof CATEGORY_CONFIG]
 
     return (
-        <>
+        <Card
+            className={cn(
+                "transition-all duration-300 border",
+                habit.completed &&
+                !weeklyNumeric &&
+                "bg-primary/5 border-primary/40 scale-[1.01]"
+            )}
+        >
+            {/* desktop and tablet */}
+            <CardContent className="hidden md:flex gap-4 ">
+                {/* Icon */}
+                <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center text-lg"
+                    style={{ background: categoryMeta?.color ?? habit.color }}
+                >
+                    {categoryMeta?.icon ?? habit.icon}
+                </div>
 
-            <Card
-                className={cn(
-                    "transition-all duration-300 border",
-                    habit.completed &&
-                    !weeklyNumeric &&
-                    "bg-primary/5 border-primary/40 scale-[1.01]"
-                )}
-            >
-                {/* desktop and tablet */}
-                <CardContent className="hidden md:flex gap-4 ">
-                    {/* Icon */}
-                    <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center text-lg"
-                        style={{ background: categoryMeta?.color ?? habit.color }}
-                    >
-                        {categoryMeta?.icon ?? habit.icon}
-                    </div>
-
-                    <div className="flex-1 space-y-4">
-                        {/* Top */}
-                        <div className="flex justify-between items-start">
-                            <div>
+                <div className="flex-1 space-y-4">
+                    {/* Top */}
+                    <div className="flex justify-between items-start">
+                        <div className="flex flex-col">
+                            <div className="flex gap-4 items-center">
                                 <h3
                                     className={cn(
-                                        "text-sm md:text-base font-medium transition-all duration-300",
+                                        "text-2xl font-medium transition-all duration-300",
                                         habit.completed &&
                                         !weeklyNumeric &&
                                         "line-through opacity-70"
@@ -101,130 +101,15 @@ export function HabitItem({
                                     {habit.title}
                                 </h3>
 
-                                {habit.description && (
-                                    <p className="text-xs text-muted-foreground mt-1">
-                                        {habit.description}
-                                    </p>
-                                )}
+                                <Badge variant={'secondary'} className="text-muted-foreground py-1 px-4">
+                                    {habit.category}
+                                </Badge>
                             </div>
-
-                            <div className="flex items-center gap-2">
-                                {weeklyNumeric ? (
-                                    <>
-                                        <button
-                                            onClick={() => onWeeklyChange(habit.id, -1)}
-                                            disabled={habit.todayValue === 0}
-                                            className="p-2 rounded-full border hover:bg-muted transition disabled:opacity-40"
-                                        >
-                                            <Minus className="size-4" />
-                                        </button>
-
-                                        <Badge
-                                            variant="secondary"
-                                            className="gap-2 px-3 py-2 select-none"
-                                            title={`Week: ${habit.weekStart ?? ""} â†’ ${habit.weekEnd ?? ""
-                                                }`}
-                                        >
-                                            <Target className="size-4" />
-                                            <span className="text-xs md:text-sm">
-                                                {weekSum}/{target}
-                                            </span>
-                                        </Badge>
-
-                                        <button
-                                            onClick={() => onWeeklyChange(habit.id, +1)}
-                                            disabled={weekSum >= target}
-                                            className="p-2 rounded-full border hover:bg-muted transition disabled:opacity-40"
-                                        >
-                                            <Plus className="size-4" />
-                                        </button>
-                                    </>
-                                ) : (
-                                    <Checkbox
-                                        checked={habit.completed}
-                                        onCheckedChange={(val) =>
-                                            onToggle(habit.id, val === true)
-                                        }
-                                        className="rounded-full w-8 h-8"
-                                    />
-                                )}
-
-                                {/* âœڈï¸ڈ Subtle Edit Button */}
-                                <Link
-                                    href={`/habits/${habit.id}/edit`}
-                                    className="p-2 rounded-full border border-transparent hover:border-border hover:bg-muted/50 transition"
-                                >
-                                    <Pencil className="size-4 text-muted-foreground" />
-                                </Link>
-                            </div>
-                        </div>
-
-                        {/* Progress */}
-                        <div className="space-y-1">
-                            <div className="relative h-2 w-full rounded-full bg-muted overflow-hidden">
-                                <div
-                                    className={cn(
-                                        "absolute left-0 top-0 h-full rounded-full transition-all duration-500 ease-out",
-                                        weeklyNumeric
-                                            ? "bg-primary"
-                                            : habit.completed
-                                                ? "bg-primary"
-                                                : "bg-muted-foreground"
-                                    )}
-                                    style={{ width: `${pct}%` }}
-                                />
-                            </div>
-
-                            <div className="flex justify-between text-xs text-muted-foreground">
-                                <span>
-                                    {weeklyNumeric
-                                        ? `${pct}% of weekly target`
-                                        : `${habit.completionPercentage}% complete`}
-                                </span>
-
-                                {habit.completedAt && !weeklyNumeric && (
-                                    <div className="flex items-center gap-1 animate-in fade-in duration-300">
-                                        <Clock className="size-3" />
-                                        <span>{formatTime(habit.completedAt)}</span>
-                                    </div>
-                                )}
-                            </div>
-
-                            {weeklyNumeric && habit.todayValue !== undefined && (
-                                <p className="text-[11px] text-muted-foreground">
-                                    Today: {habit.todayValue} {habit.unit}
+                            {habit.description && (
+                                <p className="text-sm text-muted-foreground mt-1">
+                                    {habit.description}
                                 </p>
                             )}
-                        </div>
-
-                        {/* Bottom */}
-                        <div className="flex justify-between items-center">
-                            <Badge variant="secondary" className="flex items-center gap-1">
-                                <Flame className="size-3" />
-                                {habit.streak}{" "}
-                                {habit.frequency === "weekly" ? "week" : "day"} streak
-                            </Badge>
-
-                            {habit.completed && !weeklyNumeric && (
-                                <div className="flex items-center gap-1 text-primary text-xs animate-in zoom-in-50 duration-300">
-                                    <Check className="size-3" />
-                                    Completed
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </CardContent>
-
-
-                {/* desktop and tablet */}
-                <CardContent className="flex flex-col gap-4 md:hidden">
-                    {/* Icon */}
-                    <div className="flex justify-between">
-                        <div
-                            className="w-10 h-10 rounded-xl flex items-center justify-center text-lg"
-                            style={{ background: categoryMeta?.color ?? habit.color }}
-                        >
-                            {categoryMeta?.icon ?? habit.icon}
                         </div>
 
                         <div className="flex items-center gap-2">
@@ -245,7 +130,7 @@ export function HabitItem({
                                             }`}
                                     >
                                         <Target className="size-4" />
-                                        <span className="text-xs md:text-sm">
+                                        <span className="text-sm">
                                             {weekSum}/{target}
                                         </span>
                                     </Badge>
@@ -264,25 +149,155 @@ export function HabitItem({
                                     onCheckedChange={(val) =>
                                         onToggle(habit.id, val === true)
                                     }
-                                    className="rounded-full w-8 h-8"
+                                    className={cn(
+                                        buttonVariants({ variant: "outline" }),
+                                        "transition-colors duration-200",
+                                        habit.completed && "border-transparent"
+                                    )}
+                                    style={habit.completed ? { background: categoryMeta?.color ?? habit.color } : undefined}
                                 />
                             )}
 
-                            {/* âœڈï¸ڈ Subtle Edit Button */}
+                            {/* Subtle Edit Button */}
                             <Link
                                 href={`/habits/${habit.id}/edit`}
-                                className="p-2 rounded-full border border-transparent hover:border-border hover:bg-muted/50 transition"
+                                className={`${buttonVariants({ variant: "outline" })}`}
                             >
                                 <Pencil className="size-4 text-muted-foreground" />
                             </Link>
                         </div>
                     </div>
 
-                    <Separator orientation="horizontal" />
-                    <div className="flex-1 space-y-4">
-                        {/* Top */}
-                        <div className="flex justify-between items-start">
-                            <div className="min-w-0">
+                    {/* Progress */}
+                    <div className="space-y-1">
+                        <div className="relative h-2 w-full rounded-full bg-muted overflow-hidden">
+                            <div
+                                className={cn(
+                                    "absolute left-0 top-0 h-full rounded-full transition-all duration-500 ease-out",
+                                    weeklyNumeric
+                                        ? "bg-primary"
+                                        : habit.completed
+                                            ? "bg-primary"
+                                            : "bg-muted-foreground"
+                                )}
+                                style={{ width: `${pct}%` }}
+                            />
+                        </div>
+
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                            <span>
+                                {weeklyNumeric
+                                    ? `${pct}% of weekly target`
+                                    : `${habit.completionPercentage}% complete`}
+                            </span>
+
+                            {habit.completedAt && !weeklyNumeric && (
+                                <div className="flex items-center gap-1 animate-in fade-in duration-300">
+                                    <Clock className="size-3" />
+                                    <span>{formatTime(habit.completedAt)}</span>
+                                </div>
+                            )}
+                        </div>
+
+                        {weeklyNumeric && habit.todayValue !== undefined && (
+                            <p className="text-[11px] text-muted-foreground">
+                                Today: {habit.todayValue} {habit.unit}
+                            </p>
+                        )}
+                    </div>
+
+                    {/* Bottom */}
+                    <div className="flex justify-between items-center">
+                        <Badge variant="secondary" className="flex items-center gap-1">
+                            <Flame className="size-3" />
+                            {habit.streak}{" "}
+                            {habit.frequency === "weekly" ? "week" : "day"} streak
+                        </Badge>
+
+                        {habit.completed && !weeklyNumeric && (
+                            <div className="flex items-center gap-1 text-primary text-xs animate-in zoom-in-50 duration-300">
+                                <Check className="size-3" />
+                                Completed
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </CardContent>
+
+
+            {/* mobile */}
+            <CardContent className="flex flex-col gap-4 md:hidden">
+                {/* Icon */}
+                <div className="flex justify-between">
+                    <div
+                        className="w-10 h-10 rounded-xl flex items-center justify-center text-lg"
+                        style={{ background: categoryMeta?.color ?? habit.color }}
+                    >
+                        {categoryMeta?.icon ?? habit.icon}
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        {weeklyNumeric ? (
+                            <>
+                                <button
+                                    onClick={() => onWeeklyChange(habit.id, -1)}
+                                    disabled={habit.todayValue === 0}
+                                    className="p-2 rounded-full border hover:bg-muted transition disabled:opacity-40"
+                                >
+                                    <Minus className="size-4" />
+                                </button>
+
+                                <Badge
+                                    variant="secondary"
+                                    className="gap-2 px-3 py-2 select-none"
+                                    title={`Week: ${habit.weekStart ?? ""} â†’ ${habit.weekEnd ?? ""
+                                        }`}
+                                >
+                                    <Target className="size-4" />
+                                    <span className="text-xs md:text-sm">
+                                        {weekSum}/{target}
+                                    </span>
+                                </Badge>
+
+                                <button
+                                    onClick={() => onWeeklyChange(habit.id, +1)}
+                                    disabled={weekSum >= target}
+                                    className="p-2 rounded-full border hover:bg-muted transition disabled:opacity-40"
+                                >
+                                    <Plus className="size-4" />
+                                </button>
+                            </>
+                        ) : (
+                            <Checkbox
+                                checked={habit.completed}
+                                onCheckedChange={(val) =>
+                                    onToggle(habit.id, val === true)
+                                }
+                                className={cn(
+                                    buttonVariants({ variant: "outline" }),
+                                    "transition-colors duration-200",
+                                    habit.completed && "border-transparent"
+                                )}
+                                style={habit.completed ? { background: categoryMeta?.color ?? habit.color } : undefined}
+                            />
+                        )}
+
+                        {/* Subtle Edit Button */}
+                        <Link
+                            href={`/habits/${habit.id}/edit`}
+                            className="p-2 rounded-full border border-transparent hover:border-border hover:bg-muted/50 transition"
+                        >
+                            <Pencil className="size-4 text-muted-foreground" />
+                        </Link>
+                    </div>
+                </div>
+
+                <Separator orientation="horizontal" />
+                <div className="flex-1 space-y-4">
+                    {/* Top */}
+                    <div className="flex justify-between items-start">
+                        <div className="min-w-0">
+                            <div className="flex gap-4">
                                 <h3
                                     className={cn(
                                         "text-lg font-medium transition-all duration-300  truncate ",
@@ -294,71 +309,74 @@ export function HabitItem({
                                 >
                                     {habit.title}
                                 </h3>
-
-                                {habit.description && (
-                                    <p className="text-sm text-muted-foreground mt-1 truncate">
-                                        {habit.description}
-                                    </p>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Progress */}
-                        <div className="space-y-1">
-                            <div className="relative h-2 w-full rounded-full bg-muted overflow-hidden">
-                                <div
-                                    className={cn(
-                                        "absolute left-0 top-0 h-full rounded-full transition-all duration-500 ease-out",
-                                        weeklyNumeric
-                                            ? "bg-primary"
-                                            : habit.completed
-                                                ? "bg-primary"
-                                                : "bg-muted-foreground"
-                                    )}
-                                    style={{ width: `${pct}%` }}
-                                />
+                                <Badge variant={'secondary'} className="text-muted-foreground py-1 px-4">
+                                    {habit.category}
+                                </Badge>
                             </div>
 
-                            <div className="flex justify-between text-xs text-muted-foreground">
-                                <span>
-                                    {weeklyNumeric
-                                        ? `${pct}% of weekly target`
-                                        : `${habit.completionPercentage}% complete`}
-                                </span>
-
-                                {habit.completedAt && !weeklyNumeric && (
-                                    <div className="flex items-center gap-1 animate-in fade-in duration-300">
-                                        <Clock className="size-3" />
-                                        <span>{formatTime(habit.completedAt)}</span>
-                                    </div>
-                                )}
-                            </div>
-
-                            {weeklyNumeric && habit.todayValue !== undefined && (
-                                <p className="text-[11px] text-muted-foreground">
-                                    Today: {habit.todayValue} {habit.unit}
+                            {habit.description && (
+                                <p className="text-sm text-muted-foreground mt-1 truncate">
+                                    {habit.description}
                                 </p>
                             )}
                         </div>
+                    </div>
 
-                        {/* Bottom */}
-                        <div className="flex justify-between items-center">
-                            <Badge variant="secondary" className="flex items-center gap-1">
-                                <Flame className="size-3" />
-                                {habit.streak}{" "}
-                                {habit.frequency === "weekly" ? "week" : "day"} streak
-                            </Badge>
+                    {/* Progress */}
+                    <div className="space-y-1">
+                        <div className="relative h-2 w-full rounded-full bg-muted overflow-hidden">
+                            <div
+                                className={cn(
+                                    "absolute left-0 top-0 h-full rounded-full transition-all duration-500 ease-out",
+                                    weeklyNumeric
+                                        ? "bg-primary"
+                                        : habit.completed
+                                            ? "bg-primary"
+                                            : "bg-muted-foreground"
+                                )}
+                                style={{ width: `${pct}%` }}
+                            />
+                        </div>
 
-                            {habit.completed && !weeklyNumeric && (
-                                <div className="flex items-center gap-1 text-primary text-xs animate-in zoom-in-50 duration-300">
-                                    <Check className="size-3" />
-                                    Completed
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                            <span>
+                                {weeklyNumeric
+                                    ? `${pct}% of weekly target`
+                                    : `${habit.completionPercentage}% complete`}
+                            </span>
+
+                            {habit.completedAt && !weeklyNumeric && (
+                                <div className="flex items-center gap-1 animate-in fade-in duration-300">
+                                    <Clock className="size-3" />
+                                    <span>{formatTime(habit.completedAt)}</span>
                                 </div>
                             )}
                         </div>
+
+                        {weeklyNumeric && habit.todayValue !== undefined && (
+                            <p className="text-[11px] text-muted-foreground">
+                                Today: {habit.todayValue} {habit.unit}
+                            </p>
+                        )}
                     </div>
-                </CardContent>
-            </Card>
-        </>
+
+                    {/* Bottom */}
+                    <div className="flex justify-between items-center">
+                        <Badge variant="secondary" className="flex items-center gap-1">
+                            <Flame className="size-3" />
+                            {habit.streak}{" "}
+                            {habit.frequency === "weekly" ? "week" : "day"} streak
+                        </Badge>
+
+                        {habit.completed && !weeklyNumeric && (
+                            <div className="flex items-center gap-1 text-primary text-xs animate-in zoom-in-50 duration-300">
+                                <Check className="size-3" />
+                                Completed
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
     )
 }
