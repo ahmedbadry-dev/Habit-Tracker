@@ -4,8 +4,14 @@ import React from 'react'
 import { motion } from 'framer-motion'
 import CelebrationBurst from '@/components/layout/CelebrationBurst'
 
+type HabitItemClientProps = {
+    habit: {
+        title: string
+        completed: boolean
+    }
+}
 
-export default function HabitItemClient({ habit }) {
+export default function HabitItemClient({ habit }: HabitItemClientProps) {
     const [showBurst, setShowBurst] = React.useState(false)
 
     const prevCompleted = React.useRef(habit.completed)
