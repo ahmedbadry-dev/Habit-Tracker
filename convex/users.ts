@@ -1,5 +1,7 @@
 import { mutation } from './_generated/server'
 import { authComponent } from './auth'
+import { query } from './_generated/server'
+import { getUserId } from './_utils/auth'
 
 export const syncUser = mutation({
   args: {},
@@ -18,17 +20,26 @@ export const syncUser = mutation({
       return existing._id
     }
 
-    return await ctx.db.insert('users', {
+    const userId = await ctx.db.insert('users', {
       authId: authUser._id,
       email: authUser.email,
       name: authUser.name ?? undefined,
       createdAt: Date.now(),
     })
+
+    // 🔥 Create settings automatically
+    await ctx.db.insert('userSettings', {
+      userId,
+      pushEnabled: false,
+      defaultReminderTime: '09:00',
+      language: 'en',
+      weekStartsOn: 'monday',
+      updatedAt: Date.now(),
+    })
+
+    return userId
   },
 })
-
-import { query } from './_generated/server'
-import { getUserId } from './_utils/auth'
 
 export const getCurrentUserName = query({
   args: {},
@@ -39,5 +50,19 @@ export const getCurrentUserName = query({
     if (!user) return null
 
     return user.name ?? null
+  },
+})
+
+export const getCurrentUserProfile = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getUserId(ctx)
+    const user = await ctx.db.get(userId)
+    if (!user) return null
+
+    return {
+      name: user.name ?? 'User',
+      email: user.email,
+    }
   },
 })

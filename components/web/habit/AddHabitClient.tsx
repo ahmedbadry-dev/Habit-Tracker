@@ -1,5 +1,6 @@
 'use client'
 
+import * as React from "react"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
@@ -8,7 +9,7 @@ import { SubmitHandler, useForm } from "react-hook-form"
 import { habitSchema, THabitFormValues } from "@/schema/habitSchema"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Header } from "@/components/web/header/Header"
-import { useMutation } from "convex/react"
+import { useMutation, useQuery } from "convex/react"
 import { api } from "@/convex/_generated/api"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
@@ -16,11 +17,13 @@ import { toast } from "sonner"
 export default function AddHabitClient() {
     const router = useRouter()
     const createHabit = useMutation(api.habits.createHabit)
+    const settings = useQuery(api.settings.getMySettings)
 
     const {
         control,
         handleSubmit,
         watch,
+        setValue,
         formState: { isSubmitting },
     } = useForm<THabitFormValues>({
         resolver: zodResolver(habitSchema),
@@ -39,6 +42,15 @@ export default function AddHabitClient() {
             },
         },
     })
+
+    React.useEffect(() => {
+        if (!settings?.defaultReminderTime) return
+        setValue("reminders.time", settings.defaultReminderTime, {
+            shouldDirty: false,
+            shouldTouch: false,
+            shouldValidate: false,
+        })
+    }, [settings?.defaultReminderTime, setValue])
 
     const remindersEnabled = watch("reminders.enabled")
 

@@ -8,7 +8,10 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { habitSchema, THabitFormValues } from "@/schema/habitSchema"
 import { HabitForm } from "@/components/web/habit/HabitForm"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
+import { Header } from "../header/Header"
+import Link from "next/link"
+import { ArrowLeft } from "lucide-react"
 
 type Props = {
     preloadedHabit: Preloaded<typeof api.habits.getHabitById>
@@ -47,11 +50,28 @@ export default function EditHabitClient({ preloadedHabit }: Props) {
 
     return (
         <div className="p-4 space-y-6">
+            <Header>
+                <div className="flex gap-6 items-center">
+                    <Link
+                        href="/"
+                        className={buttonVariants({ variant: "outline" })}
+                    >
+                        <ArrowLeft className="size-4" />
+                    </Link>
+
+                    <div className="relative">
+                        <p className="text-2xl font-medium">Edit Habit</p>
+                        <span className="absolute w-[50%] h-1 bg-primary -bottom-2 rounded"></span>
+                    </div>
+                </div>
+
+                <Button type="submit" onClick={handleSubmit(onSubmit)}>
+                    Save Changes
+                </Button>
+            </Header>
             <HabitForm control={control} remindersEnabled={remindersEnabled} />
 
-            <Button onClick={handleSubmit(onSubmit)}>
-                Save Changes
-            </Button>
+
         </div>
     )
 }

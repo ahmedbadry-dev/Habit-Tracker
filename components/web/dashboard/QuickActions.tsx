@@ -14,7 +14,7 @@ const actions: Action[] = [
         title: "Boost Streak",
         description: "Maintain your daily momentum",
         icon: <Flame className="size-5" />,
-        href: "/statistics",
+        href: "/statistics/habits",
     },
     {
         title: "View Analytics",
@@ -26,11 +26,13 @@ const actions: Action[] = [
         title: "Set Goals",
         description: "Adjust your weekly targets",
         icon: <Target className="size-5" />,
+        href: "/add-habit",
     },
     {
         title: "Motivation",
         description: "Get a daily inspiration",
         icon: <Sparkles className="size-5" />,
+        href: "/statistics/insights",
     },
 ]
 
