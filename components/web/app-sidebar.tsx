@@ -1,5 +1,5 @@
 "use client"
-import { useQuery } from "convex/react"
+import { useConvexAuth, useQuery } from "convex/react"
 import {
     Sidebar,
     SidebarContent,
@@ -24,12 +24,16 @@ import { api } from "@/convex/_generated/api"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const { dict } = useAppLanguage()
-    const profile = useQuery(api.users.getCurrentUserProfile)
+    const { isAuthenticated } = useConvexAuth()
+    const profile = useQuery(
+        api.users.getCurrentUserProfile,
+        isAuthenticated ? {} : "skip"
+    )
 
     const user = {
         name: profile?.name ?? "User",
-        email: profile?.email ?? "loading...",
-        avatar: `${profile?.name.slice(0, 2)}`,
+        email: profile?.email ?? (isAuthenticated ? "loading..." : "guest"),
+        avatar: "",
     }
 
     const navMain = [
@@ -37,21 +41,25 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             title: dict.nav.dashboard,
             url: "/",
             icon: IconDashboard,
+            protected: false,
         },
         {
             title: dict.nav.addHabit,
             url: "/add-habit",
             icon: IconListDetails,
+            protected: true,
         },
         {
             title: dict.nav.statistics,
             url: "/statistics",
             icon: IconChartBar,
+            protected: true,
         },
         {
             title: dict.nav.settings,
             url: "/settings",
             icon: IconSettings,
+            protected: true,
         },
     ]
 

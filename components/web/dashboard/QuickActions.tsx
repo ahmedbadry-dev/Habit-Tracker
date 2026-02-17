@@ -1,6 +1,9 @@
+"use client"
+
 import { Card, CardContent } from "@/components/ui/card"
 import { Flame, TrendingUp, Target, Sparkles } from "lucide-react"
 import Link from "next/link"
+import { useAuthGuard } from "@/hooks/useAuthGuard"
 
 type Action = {
     title: string
@@ -37,13 +40,22 @@ const actions: Action[] = [
 ]
 
 export default function QuickActions() {
+    const { requireAuth } = useAuthGuard()
+
     return (
         <div className="space-y-4">
             <h2 className="text-xl font-medium">Quick Actions</h2>
 
             <div className="grid gap-4 md:grid-cols-2">
                 {actions.map((action, i) => (
-                    <Link key={i} href={action.href ?? "#"}>
+                    <Link
+                        key={i}
+                        href={action.href ?? "#"}
+                        onClick={(e) => {
+                            const allowed = requireAuth()
+                            if (!allowed) e.preventDefault()
+                        }}
+                    >
                         <Card className="transition-all duration-200 hover:bg-muted/30 hover:-translate-y-1 cursor-pointer
                         
                         

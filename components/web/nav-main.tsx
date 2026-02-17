@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/sidebar"
 import { NavLink } from "./navLink"
 import Link from "next/link"
+import { useAuthGuard } from "@/hooks/useAuthGuard"
 
 export function NavMain({
   items,
@@ -21,8 +22,10 @@ export function NavMain({
     title: string
     url: string
     icon?: Icon
+    protected?: boolean
   }[]
 }) {
+  const { requireAuth } = useAuthGuard()
 
 
   return (
@@ -30,7 +33,14 @@ export function NavMain({
       <SidebarGroupContent className="flex flex-col gap-2">
         <SidebarMenu>
           <SidebarMenuItem className="flex items-center gap-2">
-            <Link href={'/add-habit'} className="w-full">
+            <Link
+              href={'/add-habit'}
+              className="w-full"
+              onClick={(e) => {
+                const allowed = requireAuth()
+                if (!allowed) e.preventDefault()
+              }}
+            >
               <SidebarMenuButton
                 tooltip="Quick Create"
                 className="bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground min-w-8 duration-200 ease-linear"
@@ -44,7 +54,15 @@ export function NavMain({
               className="size-8 group-data-[collapsible=icon]:opacity-0"
               variant="outline"
             >
-              <Link href={'/settings'}><IconMail /></Link>
+              <Link
+                href={'/settings'}
+                onClick={(e) => {
+                  const allowed = requireAuth()
+                  if (!allowed) e.preventDefault()
+                }}
+              >
+                <IconMail />
+              </Link>
               <span className="sr-only">Inbox</span>
             </Button>
           </SidebarMenuItem>
@@ -52,7 +70,11 @@ export function NavMain({
         <SidebarMenu>
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
-              <NavLink href={item.url} className="group block">
+              <NavLink
+                href={item.url}
+                className="group block"
+                protectedRoute={item.protected}
+              >
                 <SidebarMenuButton
                   tooltip={item.title}
                   className="
