@@ -1,6 +1,6 @@
 import { preloadQuery } from "convex/nextjs"
 import { api } from "@/convex/_generated/api"
-import { getToken } from "@/lib/auth-server"
+import { requireAuthAndSyncUser } from "@/lib/protected-auth"
 
 import { notFound } from "next/navigation"
 import EditHabitClient from "@/components/web/habit/EditHabitClient"
@@ -11,7 +11,8 @@ type Props = {
 }
 
 export default async function EditHabitPage({ params }: Props) {
-    const token = await getToken()
+    const token = await requireAuthAndSyncUser()
+
     const habitId = (await params).habitId
 
     const habit = await preloadQuery(

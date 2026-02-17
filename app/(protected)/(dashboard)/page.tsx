@@ -4,8 +4,8 @@ import HeroSection from "@/components/web/dashboard/HeroSection"
 import QuickActions from "@/components/web/dashboard/QuickActions"
 import TodayHabits from "@/components/web/dashboard/TodayHabits"
 import { api } from "@/convex/_generated/api"
-import { getToken } from "@/lib/auth-server"
 import { preloadQuery } from "convex/nextjs"
+import { requireAuthAndSyncUser } from "@/lib/protected-auth"
 
 function getTodayKey() {
   const now = new Date()
@@ -16,7 +16,7 @@ export default async function DashboardPage() {
 
 
   const todayKey = getTodayKey()
-  const token = await getToken()
+  const token = await requireAuthAndSyncUser()
 
 
   const [preloadedOverview, preloadedUserName] =

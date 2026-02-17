@@ -1,6 +1,6 @@
 import { api } from "@/convex/_generated/api"
 import { fetchQuery } from "convex/nextjs"
-import { getToken } from "@/lib/auth-server"
+import { requireAuthAndSyncUser } from "@/lib/protected-auth"
 
 import { AnalyticsSection } from "@/components/web/statistics/habits/AnalyticsSection"
 import { HabitCard } from "@/components/web/statistics/habits/HabitCard"
@@ -19,12 +19,11 @@ export default async function HabitsTab({
             ? (rawRange as StatisticsRange)
             : "week"
 
-
-    const token = await getToken()
+    const token = await requireAuthAndSyncUser()
 
     const data = await fetchQuery(
         api.statistics.getStatistics,
-        { range: range as any },
+        { range },
         { token }
     )
 

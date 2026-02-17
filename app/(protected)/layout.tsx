@@ -1,28 +1,14 @@
 import PageShellSkeleton from "@/components/layout/PageShellSkeleton"
 import PageTransition from "@/components/layout/PageTransition"
-import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/web/app-sidebar"
 import { AuthRequiredModal } from "@/components/web/auth/AuthRequiredModal"
 import { SiteHeader } from "@/components/web/site-header"
-import { api } from "@/convex/_generated/api"
-import { getToken } from "@/lib/auth-server"
-import { fetchMutation } from "convex/nextjs"
-import { redirect } from "next/navigation"
+import { requireAuthAndSyncUser } from "@/lib/protected-auth"
 import { Suspense } from "react"
 
 const HabitLayout = async ({ children }: { children: React.ReactNode }) => {
-    const token = await getToken()
-    if (!token) {
-        redirect("/auth/sign-in")
-    }
-
-    if (token) {
-        try {
-            await fetchMutation(api.users.syncUser, {}, { token })
-        } catch {
-            redirect("/auth/sign-in")
-        }
-    }
+    await requireAuthAndSyncUser()
     return (
         <AuthRequiredModal>
             <SidebarProvider

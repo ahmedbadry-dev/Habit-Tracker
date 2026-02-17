@@ -1,10 +1,10 @@
 
-import { getToken } from "@/lib/auth-server"
 import { fetchQuery } from "convex/nextjs"
 import { api } from "@/convex/_generated/api"
 import { SummaryCards } from "@/components/web/statistics/overview/SummaryCards"
 import { TimeProgress } from "@/components/web/statistics/overview/TimeProgress"
 import { CategoryProgress } from "@/components/web/statistics/overview/CategoryProgress"
+import { requireAuthAndSyncUser } from "@/lib/protected-auth"
 
 
 export type StatisticsRange = "week" | "month" | "year"
@@ -22,7 +22,7 @@ export default async function OverviewTab({
             ? (rawRange as StatisticsRange)
             : "week"
 
-    const token = await getToken()
+    const token = await requireAuthAndSyncUser()
     const data = await fetchQuery(api.statistics.getStatistics, { range }, { token })
 
     return (
