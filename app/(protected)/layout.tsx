@@ -17,7 +17,11 @@ const HabitLayout = async ({ children }: { children: React.ReactNode }) => {
     }
 
     if (token) {
-        await fetchMutation(api.users.syncUser, {}, { token })
+        try {
+            await fetchMutation(api.users.syncUser, {}, { token })
+        } catch {
+            redirect("/auth/sign-in")
+        }
     }
     return (
         <AuthRequiredModal>
