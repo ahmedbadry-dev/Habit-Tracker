@@ -1,6 +1,6 @@
 import { api } from "@/convex/_generated/api"
 import { fetchQuery } from "convex/nextjs"
-import { requireAuthAndSyncUser } from "@/lib/protected-auth"
+import { getToken } from "@/lib/auth-server"
 
 import { AnalyticsSection } from "@/components/web/statistics/habits/AnalyticsSection"
 import { HabitCard } from "@/components/web/statistics/habits/HabitCard"
@@ -19,7 +19,10 @@ export default async function HabitsTab({
             ? (rawRange as StatisticsRange)
             : "week"
 
-    const token = await requireAuthAndSyncUser()
+    const token = await getToken()
+    if (!token) {
+        return <EmptyState message="Login required to view habit analytics" />
+    }
 
     const data = await fetchQuery(
         api.statistics.getStatistics,

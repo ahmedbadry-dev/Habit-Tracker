@@ -4,7 +4,7 @@ import { api } from "@/convex/_generated/api"
 import { SummaryCards } from "@/components/web/statistics/overview/SummaryCards"
 import { TimeProgress } from "@/components/web/statistics/overview/TimeProgress"
 import { CategoryProgress } from "@/components/web/statistics/overview/CategoryProgress"
-import { requireAuthAndSyncUser } from "@/lib/protected-auth"
+import { getToken } from "@/lib/auth-server"
 
 
 export type StatisticsRange = "week" | "month" | "year"
@@ -22,7 +22,14 @@ export default async function OverviewTab({
             ? (rawRange as StatisticsRange)
             : "week"
 
-    const token = await requireAuthAndSyncUser()
+    const token = await getToken()
+    if (!token) {
+        return (
+            <div className="p-4 text-muted-foreground">
+                Login required to view statistics.
+            </div>
+        )
+    }
     const data = await fetchQuery(api.statistics.getStatistics, { range }, { token })
 
     return (
