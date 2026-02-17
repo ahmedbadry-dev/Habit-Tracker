@@ -17,11 +17,6 @@ export default function DashboardClient({
 }: {
     todayKey: string
 }) {
-    const syncUser = useMutation(api.users.syncUser)
-
-    useEffect(() => {
-        syncUser().catch(() => { })
-    }, [syncUser])
 
     const habits = useQuery(api.habits.getTodayHabits, {})
 

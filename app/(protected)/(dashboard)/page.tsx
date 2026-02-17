@@ -13,8 +13,11 @@ function getTodayKey() {
 }
 export default async function DashboardPage() {
 
+
+
   const todayKey = getTodayKey()
   const token = await getToken()
+
 
   const [preloadedOverview, preloadedUserName] =
     await Promise.all([
@@ -35,7 +38,6 @@ export default async function DashboardPage() {
   return (
     <div className="p-4 space-y-8">
       <HeroSection
-        todayKey={todayKey}
         preloadedOverview={preloadedOverview}
         preloadedUserName={preloadedUserName}
       />
