@@ -10,17 +10,14 @@ import {
     SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import {
-    IconChartBar,
-    IconDashboard,
     IconInnerShadowTop,
-    IconListDetails,
-    IconSettings
 } from "@tabler/icons-react"
 
 import { NavMain } from "./nav-main"
 import { NavUser } from "./nav-user"
 import { useAppLanguage } from "@/hooks/useAppLanguage"
 import { api } from "@/convex/_generated/api"
+import { APP_NAV_ITEMS } from "./nav-config"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const { dict } = useAppLanguage()
@@ -36,32 +33,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         avatar: "",
     }
 
-    const navMain = [
-        {
-            title: dict.nav.dashboard,
-            url: "/",
-            icon: IconDashboard,
-            protected: false,
-        },
-        {
-            title: dict.nav.addHabit,
-            url: "/add-habit",
-            icon: IconListDetails,
-            protected: true,
-        },
-        {
-            title: dict.nav.statistics,
-            url: "/statistics",
-            icon: IconChartBar,
-            protected: true,
-        },
-        {
-            title: dict.nav.settings,
-            url: "/settings",
-            icon: IconSettings,
-            protected: true,
-        },
-    ]
+    const navMain = APP_NAV_ITEMS.map((item) => ({
+        title: dict.nav[item.labelKey],
+        url: item.href,
+        icon: item.icon,
+        protected: item.protected,
+    }))
 
     return (
         <Sidebar collapsible="offcanvas" {...props}>

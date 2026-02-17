@@ -15,7 +15,7 @@ export function NavLink({
     protectedRoute?: boolean
 }) {
     const pathname = usePathname()
-    const isActive = pathname === href
+    const isActive = href === "/" ? pathname === "/" : pathname.startsWith(href)
     const { requireAuth } = useAuthGuard()
 
     return (
