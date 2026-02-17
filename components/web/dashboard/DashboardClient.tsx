@@ -7,6 +7,7 @@ import { useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Id } from "@/convex/_generated/dataModel"
 import { Loader2 } from "lucide-react"
+import { useConvexAuth } from "convex/react"
 
 function clamp(n: number, min: number, max: number) {
     return Math.max(min, Math.min(max, n))
@@ -17,8 +18,12 @@ export default function DashboardClient({
 }: {
     todayKey: string
 }) {
+    const { isAuthenticated, isLoading } = useConvexAuth()
 
-    const habits = useQuery(api.habits.getTodayHabits, {})
+    const habits = useQuery(
+        api.habits.getTodayHabits,
+        isAuthenticated ? {} : "skip"
+    )
 
     /* ---------------------------- */
     /* Mutations */
@@ -103,11 +108,19 @@ export default function DashboardClient({
     /* Loading & Empty */
     /* ---------------------------- */
 
-    if (!habits) {
+    if (isLoading || (isAuthenticated && !habits)) {
         return (
             <div className="w-full h-full flex justify-center items-center">
                 <Loader2 className="size-4 text-primary animate-spin" />
             </div>
+        )
+    }
+
+    if (!isAuthenticated) {
+        return (
+            <Card className="p-6 text-sm text-muted-foreground">
+                Sign in to view and manage your habits.
+            </Card>
         )
     }
 

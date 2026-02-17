@@ -7,12 +7,21 @@ import {
     CardHeader,
 } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Calendar, TrophyIcon, TrendingUp, Flame, Repeat } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import {
+    Calendar,
+    TrophyIcon,
+    TrendingUp,
+    Flame,
+    Repeat,
+    Lock,
+} from "lucide-react"
 import { ProgressRing } from "./ProgressRing"
 
 import { api } from "@/convex/_generated/api"
 import { Preloaded, usePreloadedQuery } from "convex/react"
 import { useEffect, useMemo, useState } from "react"
+import { useAuthGuard } from "@/hooks/useAuthGuard"
 
 /* ------------------ Helpers ------------------ */
 
@@ -37,11 +46,44 @@ function getMotivation(streak: number, percentage: number) {
     return "⚡ Fresh start. Today is yours."
 }
 
-// smooth number animation
-function useAnimatedNumber(value: number, duration = 450) {
-    const [display, setDisplay] = useState(value)
+type HeroOverview = {
+    dateLabel: string
+    overall: {
+        total: number
+        completed: number
+        percentage: number
+    }
+    daily: {
+        perfectStreak: number
+    }
+    weekly: {
+        total: number
+        completed: number
+        percentage: number
+        weekStart: string
+    }
+    bestStreak: {
+        title: string
+        value: number
+        unit: "day" | "week"
+    } | null
+}
+
+function useAnimatedNumber(
+    value: number,
+    opts?: { duration?: number; fromZero?: boolean; enabled?: boolean }
+) {
+    const duration = opts?.duration ?? 450
+    const enabled = opts?.enabled ?? true
+    const fromZero = opts?.fromZero ?? false
+    const [display, setDisplay] = useState(fromZero ? 0 : value)
 
     useEffect(() => {
+        if (!enabled) {
+            setDisplay(value)
+            return
+        }
+
         const start = display
         const end = value
         if (start === end) return
@@ -64,21 +106,97 @@ function useAnimatedNumber(value: number, duration = 450) {
     return display
 }
 
+function useAnimateOncePerSession(key: string) {
+    const [enabled] = useState(() => {
+        if (typeof window === "undefined") return false
+        const already = window.sessionStorage.getItem(key)
+        if (already) return false
+        window.sessionStorage.setItem(key, "1")
+        return true
+    })
+
+    return enabled
+}
+
 /* ------------------ Props ------------------ */
 
-type Props = {
+type AuthProps = {
+    mode: "auth"
     preloadedOverview: Preloaded<typeof api.dashboard.getDailyOverview>
     preloadedUserName: Preloaded<typeof api.users.getCurrentUserName>
 }
 
+type GuestProps = {
+    mode: "guest"
+}
+
+type Props = AuthProps | GuestProps
+
 /* ------------------ Component ------------------ */
 
-export default function HeroSection({
+const GUEST_OVERVIEW: HeroOverview = {
+    dateLabel: "Today",
+    overall: {
+        total: 8,
+        completed: 5,
+        percentage: 68,
+    },
+    daily: {
+        perfectStreak: 7,
+    },
+    weekly: {
+        total: 5,
+        completed: 3,
+        percentage: 60,
+        weekStart: "Monday",
+    },
+    bestStreak: {
+        title: "Morning Workout",
+        value: 7,
+        unit: "day",
+    },
+}
+
+export default function HeroSection(props: Props) {
+    if (props.mode === "guest") {
+        return <HeroContent mode="guest" overview={GUEST_OVERVIEW} userName={null} />
+    }
+
+    return (
+        <AuthHeroContent
+            preloadedOverview={props.preloadedOverview}
+            preloadedUserName={props.preloadedUserName}
+        />
+    )
+}
+
+function AuthHeroContent({
     preloadedOverview,
     preloadedUserName,
-}: Props) {
+}: {
+    preloadedOverview: Preloaded<typeof api.dashboard.getDailyOverview>
+    preloadedUserName: Preloaded<typeof api.users.getCurrentUserName>
+}) {
     const overview = usePreloadedQuery(preloadedOverview)
     const userName = usePreloadedQuery(preloadedUserName)
+
+    return (
+        <HeroContent mode="auth" overview={overview} userName={userName} />
+    )
+}
+
+function HeroContent({
+    mode,
+    overview,
+    userName,
+}: {
+    mode: "auth" | "guest"
+    overview: HeroOverview
+    userName: string | null
+}) {
+    const isGuest = mode === "guest"
+    const { requireAuth } = useAuthGuard()
+    const animateGuest = useAnimateOncePerSession("hero-guest-animation")
 
     const firstName = getFirstName(userName)
     const greeting = getGreeting()
@@ -88,12 +206,25 @@ export default function HeroSection({
     }, [overview.daily.perfectStreak, overview.overall.percentage])
 
     // Animated values
-    const overallPct = useAnimatedNumber(overview.overall.percentage)
-    const overallCompleted = useAnimatedNumber(overview.overall.completed)
+    const overallPct = useAnimatedNumber(overview.overall.percentage, {
+        fromZero: isGuest && animateGuest,
+        enabled: true,
+    })
+    const overallCompleted = useAnimatedNumber(overview.overall.completed, {
+        fromZero: isGuest && animateGuest,
+        enabled: true,
+    })
     const overallTotal = useAnimatedNumber(overview.overall.total)
 
-    const dailyPerfect = useAnimatedNumber(overview.daily.perfectStreak)
-    const weeklyPct = useAnimatedNumber(overview.weekly.percentage)
+    const dailyPerfect = useAnimatedNumber(overview.daily.perfectStreak, {
+        duration: 850,
+        fromZero: isGuest && animateGuest,
+        enabled: true,
+    })
+    const weeklyPct = useAnimatedNumber(overview.weekly.percentage, {
+        fromZero: isGuest && animateGuest,
+        enabled: true,
+    })
 
     const bestStreakValue = useAnimatedNumber(overview.bestStreak?.value ?? 0)
 
@@ -102,9 +233,23 @@ export default function HeroSection({
             ? `${bestStreakValue} ${overview.bestStreak.unit === "week" ? "Week" : "Day"} Streak`
             : "No streak yet"
 
+    const guestGuard = () => {
+        if (!isGuest) return
+        requireAuth(() => {
+            if (typeof window !== "undefined") {
+                window.dispatchEvent(
+                    new CustomEvent("guest-hero-cta-click", {
+                        detail: { section: "hero" },
+                    })
+                )
+            }
+        })
+    }
+
     return (
         <Card
             className="
+        relative overflow-hidden
 
         bg-linear-to-br
         from-background
@@ -116,6 +261,18 @@ export default function HeroSection({
         gap-2
       "
         >
+            {isGuest && (
+                <>
+                    <Badge
+                        variant="secondary"
+                        className="absolute top-4 right-4 z-20 flex items-center gap-1"
+                    >
+                        <Lock className="size-3" />
+                        Preview Mode
+                    </Badge>
+                    <div className="absolute inset-0 z-10 pointer-events-none rounded-xl bg-background/45 backdrop-blur-[1.5px]" />
+                </>
+            )}
             <CardHeader>
                 <div className="flex flex-col-reverse gap-4 md:flex-row md:gap-0 md:justify-between md:items-start md:mb-4">
                     <div className="space-y-3 w-full">
@@ -142,7 +299,11 @@ export default function HeroSection({
 
             <CardContent className="space-y-4">
                 {/* Separate badges */}
-                <div className="flex flex-col gap-2 justify-end ">
+                <div
+                    className={`relative z-20 flex flex-col gap-2 justify-end ${isGuest ? "cursor-pointer transition-transform duration-200 hover:scale-[1.02]" : ""
+                        }`}
+                    onClick={guestGuard}
+                >
                     <div className="flex">
                         <Badge
                             className="
@@ -161,7 +322,7 @@ export default function HeroSection({
                         </Badge>
 
                     </div>
-                    <div className="flex">
+                    <div className="flex gap-2">
                         <Badge
                             variant="secondary"
                             className="flex items-center gap-2 px-4 py-2 flex-1"
@@ -197,6 +358,7 @@ export default function HeroSection({
             transition-all duration-300
             hover:bg-muted/40
           "
+                    onClick={guestGuard}
                 >
                     <div className="flex gap-6 items-center">
                         <ProgressRing percentage={overallPct} />
@@ -216,7 +378,11 @@ export default function HeroSection({
 
                 {/* Weekly progress bar inside hero */}
                 {overview.weekly.total > 0 && (
-                    <div className="rounded-2xl border border-border/40 bg-muted/20 p-4">
+                    <div
+                        className={`rounded-2xl border border-border/40 bg-muted/20 p-4 relative overflow-hidden ${isGuest ? "cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-[1.02]" : ""
+                            }`}
+                        onClick={guestGuard}
+                    >
                         <div className="flex items-center justify-between mb-2">
                             <p className="text-sm font-medium">
                                 Weekly progress
@@ -226,16 +392,61 @@ export default function HeroSection({
                             </p>
                         </div>
 
-                        <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+                        <div className="h-2 w-full rounded-full bg-muted overflow-hidden relative">
                             <div
                                 className="h-full rounded-full transition-[width] duration-500 ease-out"
                                 style={{ width: `${weeklyPct}%`, backgroundColor: "var(--primary)" }}
                             />
+                            {isGuest && (
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse" />
+                            )}
                         </div>
 
                         <p className="mt-2 text-xs text-muted-foreground">
                             Week starts: {overview.weekly.weekStart}
                         </p>
+                    </div>
+                )}
+
+                {isGuest && (
+                    <div className="relative z-20 rounded-2xl border border-border/50 bg-card/70 p-4 md:p-5">
+                        <p className="text-sm md:text-base font-medium">
+                            Unlock full habit tracking 🚀
+                        </p>
+                        <p className="text-xs md:text-sm text-muted-foreground mt-1">
+                            Create an account to save progress & build streaks.
+                        </p>
+                        <div className="mt-4 flex items-center gap-2">
+                            <Button
+                                onClick={() => {
+                                    requireAuth()
+                                    if (typeof window !== "undefined") {
+                                        window.dispatchEvent(
+                                            new CustomEvent("guest-hero-cta-click", {
+                                                detail: { cta: "sign-up" },
+                                            })
+                                        )
+                                    }
+                                }}
+                            >
+                                Sign Up
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                onClick={() => {
+                                    requireAuth()
+                                    if (typeof window !== "undefined") {
+                                        window.dispatchEvent(
+                                            new CustomEvent("guest-hero-cta-click", {
+                                                detail: { cta: "sign-in" },
+                                            })
+                                        )
+                                    }
+                                }}
+                            >
+                                Sign In
+                            </Button>
+                        </div>
                     </div>
                 )}
             </CardContent>
