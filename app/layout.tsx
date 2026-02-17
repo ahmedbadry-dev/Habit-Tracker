@@ -5,9 +5,8 @@ import { ThemeProvider } from "@/components/web/theme-provider";
 import { ConvexClientProvider } from "@/components/web/ConvexClientProvider";
 import { getToken } from "@/lib/auth-server";
 import { Toaster } from "@/components/ui/sonner";
-import { fetchMutation } from "convex/nextjs";
-import { api } from "@/convex/_generated/api";
-import { redirect } from "next/navigation";
+import { AuthGuardProvider } from "@/components/web/auth/AuthGuardProvider";
+import { AuthRequiredModal } from "@/components/web/auth/AuthRequiredModal";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -42,7 +41,10 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           <ConvexClientProvider initialToken={token}>
-            {children}
+            <AuthGuardProvider>
+              {children}
+              <AuthRequiredModal />
+            </AuthGuardProvider>
           </ConvexClientProvider>
           <Toaster richColors />
         </ThemeProvider>

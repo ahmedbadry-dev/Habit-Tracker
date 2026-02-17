@@ -1,6 +1,6 @@
 import { api } from "@/convex/_generated/api"
 import { fetchQuery } from "convex/nextjs"
-import { requireAuthAndSyncUser } from "@/lib/protected-auth"
+import { getToken } from "@/lib/auth-server"
 
 import { InsightCard } from "@/components/web/statistics/Insight/InsightCard"
 import { StatisticsRange } from "@/types/statistics"
@@ -18,7 +18,14 @@ export default async function InsightsTab({
             ? (rawRange as StatisticsRange)
             : "week"
 
-    const token = await requireAuthAndSyncUser()
+    const token = await getToken()
+    if (!token) {
+        return (
+            <div className="p-4 text-muted-foreground">
+                Login required to view insights.
+            </div>
+        )
+    }
 
     const data = await fetchQuery(
         api.statistics.getStatistics,
