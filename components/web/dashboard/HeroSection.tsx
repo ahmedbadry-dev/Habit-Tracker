@@ -67,7 +67,6 @@ function useAnimatedNumber(value: number, duration = 450) {
 /* ------------------ Props ------------------ */
 
 type Props = {
-    todayKey: string
     preloadedOverview: Preloaded<typeof api.dashboard.getDailyOverview>
     preloadedUserName: Preloaded<typeof api.users.getCurrentUserName>
 }
@@ -75,7 +74,6 @@ type Props = {
 /* ------------------ Component ------------------ */
 
 export default function HeroSection({
-    todayKey,
     preloadedOverview,
     preloadedUserName,
 }: Props) {
