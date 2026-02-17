@@ -1,5 +1,6 @@
 import PageShellSkeleton from "@/components/layout/PageShellSkeleton"
 import PageTransition from "@/components/layout/PageTransition"
+import MobileBottomNav from "@/components/layout/MobileBottomNav"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/web/app-sidebar"
 import { SiteHeader } from "@/components/web/site-header"
@@ -15,11 +16,13 @@ const HabitLayout = async ({ children }: { children: React.ReactNode }) => {
                 } as React.CSSProperties
             }
         >
-            <AppSidebar variant="inset" />
+            <div className="hidden md:block">
+                <AppSidebar variant="inset" />
+            </div>
             <SidebarInset>
                 <SiteHeader />
                 <PageTransition>
-                    <main className="flex-1">
+                    <main className="flex-1 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0">
                         <div className="@container/main max-w-5xl m-auto">
                             <Suspense fallback={<PageShellSkeleton />}>
                                 {children}
@@ -28,6 +31,7 @@ const HabitLayout = async ({ children }: { children: React.ReactNode }) => {
                     </main>
                 </PageTransition>
             </SidebarInset>
+            <MobileBottomNav />
         </SidebarProvider>
     )
 }
