@@ -124,8 +124,9 @@ export default function DashboardClient({
         )
     }
 
+    const habitsData = habits ?? []
 
-    if (habits.length === 0) {
+    if (habitsData.length === 0) {
         return (
             <Card
                 className="
@@ -166,7 +167,7 @@ export default function DashboardClient({
         id: Id<"habits">,
         delta: number
     ) => {
-        const current = habits.find((h) => h.id === id)
+        const current = habitsData.find((h) => h.id === id)
         if (!current) return
 
         const target =
@@ -189,8 +190,8 @@ export default function DashboardClient({
         })
     }
 
-    const dailyHabits = habits.filter((habit) => habit.frequency === "daily")
-    const weeklyHabits = habits.filter((habit) => habit.frequency === "weekly")
+    const dailyHabits = habitsData.filter((habit) => habit.frequency === "daily")
+    const weeklyHabits = habitsData.filter((habit) => habit.frequency === "weekly")
 
     /* ---------------------------- */
     /* Render */
