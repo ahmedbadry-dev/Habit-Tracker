@@ -1,4 +1,4 @@
-import { CATEGORY_CONFIG } from '@/app/(habitTracker)/add-habit/page'
+import { CATEGORY_CONFIG } from '@/app/(protected)/add-habit/page'
 import { Card } from '@/components/ui/card'
 import { Field, FieldContent, FieldError, FieldGroup, FieldLabel, FieldLegend, FieldSet } from '@/components/ui/field'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'

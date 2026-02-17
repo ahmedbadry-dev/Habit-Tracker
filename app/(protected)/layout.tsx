@@ -4,9 +4,21 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/s
 import { AppSidebar } from "@/components/web/app-sidebar"
 import { AuthRequiredModal } from "@/components/web/auth/AuthRequiredModal"
 import { SiteHeader } from "@/components/web/site-header"
+import { api } from "@/convex/_generated/api"
+import { getToken } from "@/lib/auth-server"
+import { fetchMutation } from "convex/nextjs"
+import { redirect } from "next/navigation"
 import { Suspense } from "react"
 
-const HabitLayout = ({ children }: { children: React.ReactNode }) => {
+const HabitLayout = async ({ children }: { children: React.ReactNode }) => {
+    const token = await getToken()
+    if (!token) {
+        redirect("/auth/sign-in")
+    }
+
+    if (token) {
+        await fetchMutation(api.users.syncUser, {}, { token })
+    }
     return (
         <AuthRequiredModal>
             <SidebarProvider
