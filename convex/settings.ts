@@ -1,6 +1,6 @@
 import { query, mutation } from './_generated/server'
 import { v } from 'convex/values'
-import { getUserId } from './_utils/auth'
+import { getUserId, getUserIdOptional } from './_utils/auth'
 
 type PublicSettings = {
   pushEnabled: boolean
@@ -19,7 +19,8 @@ const DEFAULTS: PublicSettings = {
 export const getMySettings = query({
   args: {},
   handler: async (ctx): Promise<PublicSettings> => {
-    const userId = await getUserId(ctx)
+    const userId = await getUserIdOptional(ctx)
+    if (!userId) return DEFAULTS
 
     const existing = await ctx.db
       .query('userSettings')

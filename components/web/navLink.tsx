@@ -8,14 +8,20 @@ export function NavLink({
     children,
     className = '',
     protectedRoute = false,
+    exact = false,
 }: {
     href: string
     children: React.ReactNode
     className?: string
     protectedRoute?: boolean
+    exact?: boolean
 }) {
     const pathname = usePathname()
-    const isActive = href === "/" ? pathname === "/" : pathname.startsWith(href)
+    const isActive = exact
+        ? pathname === href
+        : href === "/"
+            ? pathname === "/"
+            : pathname.startsWith(href)
     const { requireAuth } = useAuthGuard()
 
     return (

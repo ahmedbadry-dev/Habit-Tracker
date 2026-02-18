@@ -3,6 +3,7 @@ import { fetchQuery } from "convex/nextjs"
 import { getToken } from "@/lib/auth-server"
 
 import { InsightCard } from "@/components/web/statistics/Insight/InsightCard"
+import { EmptyState } from "@/utils/shared/EmptyState"
 import { StatisticsRange } from "@/types/statistics"
 
 const validRanges: StatisticsRange[] = ["week", "month", "year"]
@@ -35,7 +36,11 @@ export default async function InsightsTab({
 
     const insights = data.insights
 
-    if (!insights) return null
+    if (!insights) {
+        return (
+            <EmptyState message="No insights yet. Add and complete habits to generate insights." />
+        )
+    }
 
     return (
         <div className="grid gap-8 lg:grid-cols-2">

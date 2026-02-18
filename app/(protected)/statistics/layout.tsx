@@ -34,7 +34,7 @@ const StatisticsLayout = ({ children }: { children: React.ReactNode }) => {
             </Header>
             <nav className="mb-10">
                 <div className="flex text-center bg-accent rounded-2xl max-w-5xl m-auto ">
-                    <NavLink href={'/statistics'} className="flex-1 p-2 [&.active]:bg-primary-foreground [&.active]:text-primary text-muted-foreground rounded-2xl transition duration-200">Overview</NavLink>
+                    <NavLink exact href={'/statistics'} className="flex-1 p-2 [&.active]:bg-primary-foreground [&.active]:text-primary text-muted-foreground rounded-2xl transition duration-200">Overview</NavLink>
                     <NavLink href={'/statistics/habits'} className="flex-1 p-2 [&.active]:bg-primary-foreground [&.active]:text-primary text-muted-foreground rounded-2xl transition duration-200">Habits</NavLink>
                     <NavLink href={'/statistics/insights'} className="flex-1 p-2 [&.active]:bg-primary-foreground [&.active]:text-primary text-muted-foreground rounded-2xl transition duration-200">Insights</NavLink>
                 </div>

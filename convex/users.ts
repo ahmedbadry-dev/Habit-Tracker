@@ -1,7 +1,7 @@
 import { mutation } from './_generated/server'
 import { authComponent } from './auth'
 import { query } from './_generated/server'
-import { getUserId } from './_utils/auth'
+import { getUserIdOptional } from './_utils/auth'
 
 export const syncUser = mutation({
   args: {},
@@ -17,6 +17,22 @@ export const syncUser = mutation({
       .unique()
 
     if (existing) {
+      const existingSettings = await ctx.db
+        .query('userSettings')
+        .withIndex('by_userId', (q) => q.eq('userId', existing._id))
+        .unique()
+
+      if (!existingSettings) {
+        await ctx.db.insert('userSettings', {
+          userId: existing._id,
+          pushEnabled: false,
+          defaultReminderTime: '09:00',
+          language: 'en',
+          weekStartsOn: 'monday',
+          updatedAt: Date.now(),
+        })
+      }
+
       return existing._id
     }
 
@@ -44,7 +60,8 @@ export const syncUser = mutation({
 export const getCurrentUserName = query({
   args: {},
   handler: async (ctx) => {
-    const userId = await getUserId(ctx)
+    const userId = await getUserIdOptional(ctx)
+    if (!userId) return null
 
     const user = await ctx.db.get(userId)
     if (!user) return null
@@ -56,7 +73,9 @@ export const getCurrentUserName = query({
 export const getCurrentUserProfile = query({
   args: {},
   handler: async (ctx) => {
-    const userId = await getUserId(ctx)
+    const userId = await getUserIdOptional(ctx)
+    if (!userId) return null
+
     const user = await ctx.db.get(userId)
     if (!user) return null
 

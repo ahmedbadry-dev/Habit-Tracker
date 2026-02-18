@@ -1,4 +1,5 @@
 "use client"
+import { useEffect, useState } from "react"
 import { useConvexAuth, useQuery } from "convex/react"
 import {
     Sidebar,
@@ -17,9 +18,10 @@ import { NavMain } from "./nav-main"
 import { NavUser } from "./nav-user"
 import { useAppLanguage } from "@/hooks/useAppLanguage"
 import { api } from "@/convex/_generated/api"
-import { APP_NAV_ITEMS } from "./nav-config"
+import { APP_NAV_ITEMS, NAV_LABEL_FALLBACKS } from "./nav-config"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+    const [mounted, setMounted] = useState(false)
     const { dict } = useAppLanguage()
     const { isAuthenticated } = useConvexAuth()
     const profile = useQuery(
@@ -27,14 +29,22 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         isAuthenticated ? {} : "skip"
     )
 
-    const user = {
+    useEffect(() => {
+        setMounted(true)
+    }, [])
+
+    const user = mounted ? {
         name: profile?.name ?? "User",
         email: profile?.email ?? (isAuthenticated ? "loading..." : "guest"),
-        avatar: "",
+        avatar: profile?.name.slice(0, 2).toUpperCase() ?? 'GU',
+    } : {
+        name: "User",
+        email: "guest",
+        avatar: 'GU',
     }
 
     const navMain = APP_NAV_ITEMS.map((item) => ({
-        title: dict.nav[item.labelKey],
+        title: mounted ? dict.nav[item.labelKey] : NAV_LABEL_FALLBACKS[item.labelKey],
         url: item.href,
         icon: item.icon,
         protected: item.protected,

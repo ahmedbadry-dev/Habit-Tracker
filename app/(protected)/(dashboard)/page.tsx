@@ -5,7 +5,7 @@ import QuickActions from "@/components/web/dashboard/QuickActions"
 import TodayHabits from "@/components/web/dashboard/TodayHabits"
 import { api } from "@/convex/_generated/api"
 import { preloadQuery } from "convex/nextjs"
-import { getToken } from "@/lib/auth-server"
+import { fetchAuthMutation, getToken } from "@/lib/auth-server"
 
 function getTodayKey() {
   const now = new Date()
@@ -17,6 +17,9 @@ export default async function DashboardPage() {
 
   const todayKey = getTodayKey()
   const token = await getToken()
+  if (token) {
+    await fetchAuthMutation(api.users.syncUser, {})
+  }
 
   const preloaded =
     token

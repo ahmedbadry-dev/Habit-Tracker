@@ -24,6 +24,22 @@ export async function getUserId(ctx: any): Promise<Id<'users'>> {
 }
 
 /**
+ * Query-safe optional lookup: returns null when unauthenticated
+ * or when auth user exists but app user row is not created yet.
+ */
+export async function getUserIdOptional(ctx: any): Promise<Id<'users'> | null> {
+  const authUser = await authComponent.getAuthUser(ctx)
+  if (!authUser) return null
+
+  const user = await ctx.db
+    .query('users')
+    .withIndex('by_authId', (q: any) => q.eq('authId', authUser._id))
+    .unique()
+
+  return user?._id ?? null
+}
+
+/**
  * Mutation-only: get or create user record
  */
 export async function getOrCreateUserId(ctx: any): Promise<Id<'users'>> {
