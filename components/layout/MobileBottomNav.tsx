@@ -1,30 +1,36 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { useAuthGuard } from "@/hooks/useAuthGuard"
-import { APP_NAV_ITEMS } from "@/components/web/nav-config"
+import { APP_NAV_ITEMS, NAV_LABEL_FALLBACKS } from "@/components/web/nav-config"
 import { useAppLanguage } from "@/hooks/useAppLanguage"
 
 export default function MobileBottomNav() {
+  const [mounted, setMounted] = useState(false)
   const pathname = usePathname()
   const { dict } = useAppLanguage()
   const { isAuthenticated, requireAuth } = useAuthGuard()
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   return (
     <nav
       aria-label="Mobile Navigation"
       className="fixed inset-x-0 bottom-0 z-50 border-t bg-background/80 shadow-[0_-6px_24px_rgba(0,0,0,0.08)] backdrop-blur-md md:hidden"
     >
-      <div className="mx-auto grid h-[4.5rem] max-w-3xl grid-cols-4 items-center px-2 pb-[env(safe-area-inset-bottom)] pt-1">
+      <div className="mx-auto grid h-18 max-w-3xl grid-cols-4 items-center px-2 pb-[env(safe-area-inset-bottom)] pt-1">
         {APP_NAV_ITEMS.map((item) => {
           const isActive =
             item.href === "/"
               ? pathname === "/"
               : pathname.startsWith(item.href)
-          const isProtectedGuest = Boolean(item.protected && !isAuthenticated)
-          const label = dict.nav[item.labelKey]
+          const isProtectedGuest = Boolean(item.protected && mounted && !isAuthenticated)
+          const label = mounted ? dict.nav[item.labelKey] : NAV_LABEL_FALLBACKS[item.labelKey]
 
           return (
             <Link
@@ -41,7 +47,7 @@ export default function MobileBottomNav() {
                 isActive
                   ? "bg-primary/10 text-primary"
                   : "text-muted-foreground hover:text-foreground",
-                isActive && "translate-y-[-1px] scale-[1.01]",
+                isActive && "-translate-y-px scale-[1.01]",
                 isProtectedGuest && "opacity-85"
               )}
             >
