@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { Button, buttonVariants } from "@/components/ui/button"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { HabitForm } from "@/components/web/habit/HabitForm"
 import { SubmitHandler, useForm } from "react-hook-form"
@@ -97,7 +97,10 @@ export default function AddHabitClient() {
                     disabled={isSubmitting}
                     onClick={handleSubmit(onSubmit)}
                 >
-                    {isSubmitting ? "Creating..." : "Create"}
+                    {isSubmitting ? <>
+                        <Loader2 className="size-4 animate-spin" />
+                        <span>Creating...</span>
+                    </> : "Create"}
                 </Button>
             </Header>
 

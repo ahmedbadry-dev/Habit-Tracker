@@ -25,14 +25,6 @@ import { useAuthGuard } from "@/hooks/useAuthGuard"
 
 /* ------------------ Helpers ------------------ */
 
-function getGreeting() {
-    const hour = new Date().getHours()
-    if (hour >= 5 && hour < 12) return "Good Morning"
-    if (hour >= 12 && hour < 17) return "Good Afternoon"
-    if (hour >= 17 && hour < 22) return "Good Evening"
-    return "Good Night"
-}
-
 function getFirstName(fullName?: string | null) {
     if (!fullName) return ""
     return fullName.split(" ")[0]
@@ -107,13 +99,14 @@ function useAnimatedNumber(
 }
 
 function useAnimateOncePerSession(key: string) {
-    const [enabled] = useState(() => {
-        if (typeof window === "undefined") return false
+    const [enabled, setEnabled] = useState(false)
+
+    useEffect(() => {
         const already = window.sessionStorage.getItem(key)
-        if (already) return false
+        if (already) return
         window.sessionStorage.setItem(key, "1")
-        return true
-    })
+        setEnabled(true)
+    }, [key])
 
     return enabled
 }
@@ -199,7 +192,7 @@ function HeroContent({
     const animateGuest = useAnimateOncePerSession("hero-guest-animation")
 
     const firstName = getFirstName(userName)
-    const greeting = getGreeting()
+    const greeting = "Welcome"
 
     const motivation = useMemo(() => {
         return getMotivation(overview.daily.perfectStreak, overview.overall.percentage)
@@ -398,7 +391,7 @@ function HeroContent({
                                 style={{ width: `${weeklyPct}%`, backgroundColor: "var(--primary)" }}
                             />
                             {isGuest && (
-                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse" />
+                                <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/20 to-transparent animate-pulse" />
                             )}
                         </div>
 
