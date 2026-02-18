@@ -23,18 +23,82 @@ async function sendEmail(opts: { to: string; subject: string; html: string }) {
   })
 }
 
-const siteUrl =
-  process.env.SITE_URL ??
-  process.env.NEXT_PUBLIC_SITE_URL ??
-  'http://localhost:3000'
+function resolveBaseUrl() {
+  if (process.env.BETTER_AUTH_URL) return process.env.BETTER_AUTH_URL
+  if (process.env.SITE_URL) return process.env.SITE_URL
+  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`
+  return 'http://localhost:3000'
+}
+
+function normalizeOrigin(value?: string | null) {
+  if (!value) return undefined
+  const trimmed = value.trim()
+  if (!trimmed) return undefined
+
+  // Allow plain host from env values and normalize protocol deterministically.
+  const candidate =
+    trimmed.startsWith('http://') || trimmed.startsWith('https://')
+      ? trimmed
+      : `https://${trimmed}`
+
+  try {
+    return new URL(candidate).origin
+  } catch {
+    return undefined
+  }
+}
+
+function parseCsvOrigins(csv?: string) {
+  if (!csv) return []
+  return csv
+    .split(',')
+    .map((origin) => normalizeOrigin(origin))
+    .filter((origin): origin is string => Boolean(origin))
+}
+
+function buildTrustedOrigins(baseURL: string) {
+  const origins = [
+    normalizeOrigin(baseURL),
+    normalizeOrigin(process.env.BETTER_AUTH_URL),
+    normalizeOrigin(process.env.SITE_URL),
+    normalizeOrigin(process.env.NEXT_PUBLIC_SITE_URL),
+    normalizeOrigin(process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined),
+    normalizeOrigin(process.env.NEXT_PUBLIC_CONVEX_SITE_URL),
+    normalizeOrigin(process.env.NEXT_PUBLIC_CONVEX_URL),
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://[::1]:3000',
+    ...parseCsvOrigins(process.env.BETTER_AUTH_TRUSTED_ORIGINS),
+  ].filter((origin): origin is string => Boolean(origin))
+
+  return [...new Set(origins)]
+}
+
+const baseURL = normalizeOrigin(resolveBaseUrl()) ?? 'http://localhost:3000'
+const trustedOrigins = buildTrustedOrigins(baseURL)
+const ORIGIN_DEBUG = process.env.BETTER_AUTH_ORIGIN_DEBUG !== 'false'
 
 // The component client has methods needed for integrating Convex with Better Auth,
 // as well as helper methods for general use.
 export const authComponent = createClient<DataModel>(components.betterAuth)
 
 export const createAuth = (ctx: GenericCtx<DataModel>) => {
+  if (ORIGIN_DEBUG) {
+    console.log('[better-auth][origin] baseURL:', baseURL)
+    console.log('[better-auth][origin] trustedOrigins:', trustedOrigins)
+  }
+
   return betterAuth({
-    baseURL: siteUrl,
+    baseURL,
+    trustedOrigins: async (request) => {
+      if (ORIGIN_DEBUG) {
+        const requestOrigin =
+          request?.headers.get('origin') ?? request?.headers.get('referer') ?? 'missing'
+        console.log('[better-auth][origin] request origin:', requestOrigin)
+      }
+      return trustedOrigins
+    },
     database: authComponent.adapter(ctx),
     // Configure simple, non-verified email/password to get started
     emailAndPassword: {
