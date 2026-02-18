@@ -6,44 +6,35 @@ import {
   type LucideIcon,
 } from "lucide-react"
 
-export type NavLabelKey = "dashboard" | "addHabit" | "statistics" | "settings"
-
 export type NavItemConfig = {
   href: string
-  labelKey: NavLabelKey
+  label: string
   icon: LucideIcon
   protected?: boolean
-}
-
-export const NAV_LABEL_FALLBACKS: Record<NavLabelKey, string> = {
-  dashboard: "Dashboard",
-  addHabit: "Add Habit",
-  statistics: "Statistics",
-  settings: "Settings",
 }
 
 export const APP_NAV_ITEMS: NavItemConfig[] = [
   {
     href: "/",
-    labelKey: "dashboard",
+    label: "Dashboard",
     icon: LayoutDashboard,
     protected: false,
   },
   {
     href: "/add-habit",
-    labelKey: "addHabit",
+    label: "Add Habit",
     icon: PlusCircle,
     protected: true,
   },
   {
     href: "/statistics",
-    labelKey: "statistics",
+    label: "Statistics",
     icon: ChartColumn,
     protected: true,
   },
   {
     href: "/settings",
-    labelKey: "settings",
+    label: "Settings",
     icon: Settings,
     protected: true,
   },

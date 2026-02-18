@@ -16,13 +16,11 @@ import {
 
 import { NavMain } from "./nav-main"
 import { NavUser } from "./nav-user"
-import { useAppLanguage } from "@/hooks/useAppLanguage"
 import { api } from "@/convex/_generated/api"
-import { APP_NAV_ITEMS, NAV_LABEL_FALLBACKS } from "./nav-config"
+import { APP_NAV_ITEMS } from "./nav-config"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const [mounted, setMounted] = useState(false)
-    const { dict } = useAppLanguage()
     const { isAuthenticated } = useConvexAuth()
     const profile = useQuery(
         api.users.getCurrentUserProfile,
@@ -44,7 +42,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     }
 
     const navMain = APP_NAV_ITEMS.map((item) => ({
-        title: mounted ? dict.nav[item.labelKey] : NAV_LABEL_FALLBACKS[item.labelKey],
+        title: item.label,
         url: item.href,
         icon: item.icon,
         protected: item.protected,

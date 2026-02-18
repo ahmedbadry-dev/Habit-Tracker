@@ -27,7 +27,6 @@ export const syncUser = mutation({
           userId: existing._id,
           pushEnabled: false,
           defaultReminderTime: '09:00',
-          language: 'en',
           weekStartsOn: 'monday',
           updatedAt: Date.now(),
         })
@@ -48,7 +47,6 @@ export const syncUser = mutation({
       userId,
       pushEnabled: false,
       defaultReminderTime: '09:00',
-      language: 'en',
       weekStartsOn: 'monday',
       updatedAt: Date.now(),
     })

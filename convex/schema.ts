@@ -75,8 +75,7 @@ export default defineSchema({
 
     pushEnabled: v.boolean(),
     defaultReminderTime: v.string(), // "09:00"
-
-    language: v.union(v.literal('en'), v.literal('ar')),
+    language: v.optional(v.union(v.literal('en'), v.literal('ar'))),
 
     weekStartsOn: v.union(
       v.literal('monday'),
