@@ -11,7 +11,7 @@ const layout = ({ children }: { children: React.ReactNode }) => {
                     Go Back
                 </Link>
             </div>
-            <div className="w-full max-w-md mx-auto">
+            <div className="w-full max-w-md mx-auto p-4">
                 {children}
             </div>
         </div>
