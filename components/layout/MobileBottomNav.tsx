@@ -5,13 +5,11 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { useAuthGuard } from "@/hooks/useAuthGuard"
-import { APP_NAV_ITEMS, NAV_LABEL_FALLBACKS } from "@/components/web/nav-config"
-import { useAppLanguage } from "@/hooks/useAppLanguage"
+import { APP_NAV_ITEMS } from "@/components/web/nav-config"
 
 export default function MobileBottomNav() {
   const [mounted, setMounted] = useState(false)
   const pathname = usePathname()
-  const { dict } = useAppLanguage()
   const { isAuthenticated, requireAuth } = useAuthGuard()
 
   useEffect(() => {
@@ -30,7 +28,7 @@ export default function MobileBottomNav() {
               ? pathname === "/"
               : pathname.startsWith(item.href)
           const isProtectedGuest = Boolean(item.protected && mounted && !isAuthenticated)
-          const label = mounted ? dict.nav[item.labelKey] : NAV_LABEL_FALLBACKS[item.labelKey]
+          const label = item.label
 
           return (
             <Link

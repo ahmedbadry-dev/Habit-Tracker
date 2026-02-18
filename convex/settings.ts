@@ -5,14 +5,12 @@ import { getUserId, getUserIdOptional } from './_utils/auth'
 type PublicSettings = {
   pushEnabled: boolean
   defaultReminderTime: string
-  language: 'en' | 'ar'
   weekStartsOn: 'monday' | 'sunday' | 'saturday'
 }
 
 const DEFAULTS: PublicSettings = {
   pushEnabled: false,
   defaultReminderTime: '09:00',
-  language: 'en',
   weekStartsOn: 'monday',
 }
 
@@ -32,7 +30,6 @@ export const getMySettings = query({
     return {
       pushEnabled: existing.pushEnabled,
       defaultReminderTime: existing.defaultReminderTime,
-      language: existing.language,
       weekStartsOn: existing.weekStartsOn,
     }
   },
@@ -43,7 +40,6 @@ export const updateMySettings = mutation({
     patch: v.object({
       pushEnabled: v.optional(v.boolean()),
       defaultReminderTime: v.optional(v.string()),
-      language: v.optional(v.union(v.literal('en'), v.literal('ar'))),
       weekStartsOn: v.optional(
         v.union(v.literal('monday'), v.literal('sunday'), v.literal('saturday'))
       ),

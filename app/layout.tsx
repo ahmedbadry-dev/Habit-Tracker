@@ -2,12 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/web/theme-provider";
-import { ConvexClientProvider } from "@/components/web/ConvexClientProvider";
-import { getToken } from "@/lib/auth-server";
 import { Toaster } from "@/components/ui/sonner";
-import { AuthGuardProvider } from "@/components/web/auth/AuthGuardProvider";
-import { AuthRequiredModal } from "@/components/web/auth/AuthRequiredModal";
-import { AppLanguageProvider } from "@/hooks/useAppLanguage";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,7 +24,6 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const token = await getToken()
   return (
     <html lang="en" suppressHydrationWarning>
       <body
@@ -41,14 +35,7 @@ export default async function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <ConvexClientProvider initialToken={token}>
-            <AppLanguageProvider>
-              <AuthGuardProvider>
-                {children}
-                <AuthRequiredModal />
-              </AuthGuardProvider>
-            </AppLanguageProvider>
-          </ConvexClientProvider>
+          {children}
           <Toaster richColors position="top-center" />
         </ThemeProvider>
       </body>

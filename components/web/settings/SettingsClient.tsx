@@ -4,8 +4,12 @@ import * as React from 'react'
 import { useTheme } from 'next-themes'
 import { useMutation, useQuery } from 'convex/react'
 import { api } from '@/convex/_generated/api'
+import { useRouter } from 'next/navigation'
+import { LogOut } from 'lucide-react'
+import { authClient } from '@/lib/auth-client'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import {
     Select,
@@ -15,7 +19,6 @@ import {
     SelectValue,
 } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
-import { useAppLanguage } from '@/hooks/useAppLanguage'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { IconSettings } from '@tabler/icons-react'
@@ -57,13 +60,12 @@ const WEEK_STARTS = ['monday', 'sunday', 'saturday'] as const
 type SettingsPatch = {
     pushEnabled?: boolean
     defaultReminderTime?: string
-    language?: 'en' | 'ar'
     weekStartsOn?: 'monday' | 'sunday' | 'saturday'
 }
 
 export default function SettingsClient() {
     const { theme, setTheme } = useTheme()
-    const { dict } = useAppLanguage()
+    const router = useRouter()
 
     const settings = useQuery(api.settings.getMySettings)
     const update = useMutation(api.settings.updateMySettings)
@@ -91,7 +93,6 @@ export default function SettingsClient() {
         pushEnabled: optimistic?.pushEnabled ?? settings.pushEnabled,
         defaultReminderTime:
             optimistic?.defaultReminderTime ?? settings.defaultReminderTime,
-        language: optimistic?.language ?? settings.language,
         weekStartsOn: optimistic?.weekStartsOn ?? settings.weekStartsOn,
     }
 
@@ -101,14 +102,14 @@ export default function SettingsClient() {
                 <div className="grid h-9 w-9 place-items-center rounded-lg border bg-background">
                     <span className="text-sm"><IconSettings className='size-4 text-muted-foreground' /></span>
                 </div>
-                <h1 className="text-xl font-semibold">{dict.settings.title}</h1>
+                <h1 className="text-xl font-semibold">Settings</h1>
             </div>
 
             <div className="space-y-6">
                 <Card className="rounded-2xl">
                     <CardHeader className="pb-2">
                         <CardTitle className="flex items-center gap-2 text-base">
-                            {dict.settings.notifications}
+                            Notifications
                         </CardTitle>
                     </CardHeader>
 
@@ -116,11 +117,11 @@ export default function SettingsClient() {
                         <Row
                             title={
                                 <span className="inline-flex items-center gap-2">
-                                    {dict.settings.pushNotifications}
+                                    Push Notifications
                                     <Badge variant="secondary">Soon</Badge>
                                 </span>
                             }
-                            desc={dict.settings.pushNotificationsDesc}
+                            desc="Enable browser push reminders."
                             right={
                                 <Switch
                                     checked={merged.pushEnabled}
@@ -164,8 +165,8 @@ export default function SettingsClient() {
                         <Separator />
 
                         <Row
-                            title={dict.settings.defaultReminderTime}
-                            desc={dict.settings.defaultReminderTimeDesc}
+                            title="Default Reminder Time"
+                            desc="Choose the default daily reminder time."
                             right={
                                 <Select
                                     value={merged.defaultReminderTime}
@@ -192,14 +193,14 @@ export default function SettingsClient() {
                 <Card className="rounded-2xl">
                     <CardHeader className="pb-2">
                         <CardTitle className="flex items-center gap-2 text-base">
-                            {dict.settings.appearance}
+                            Appearance
                         </CardTitle>
                     </CardHeader>
 
                     <CardContent className="pt-0">
                         <Row
-                            title={dict.settings.darkMode}
-                            desc={dict.settings.darkModeDesc}
+                            title="Dark Mode"
+                            desc="Switch between light and dark theme."
                             right={
                                 <Switch
                                     checked={darkModeChecked}
@@ -215,44 +216,14 @@ export default function SettingsClient() {
                 <Card className="rounded-2xl">
                     <CardHeader className="pb-2">
                         <CardTitle className="flex items-center gap-2 text-base">
-                            {dict.settings.general}
+                            General
                         </CardTitle>
                     </CardHeader>
 
                     <CardContent className="pt-0">
                         <Row
-                            title={
-                                <span className="inline-flex items-center gap-2">
-                                    {dict.settings.language}
-                                    <Badge variant="secondary">Soon</Badge>
-                                </span>
-                            }
-                            desc={dict.settings.languageDesc}
-                            right={
-                                <Select
-                                    value={merged.language}
-                                    onValueChange={() => { }}
-                                >
-                                    <SelectTrigger className="w-35 rounded-xl">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="en">
-                                            {dict.settings.english}
-                                        </SelectItem>
-                                        <SelectItem value="ar">
-                                            {dict.settings.arabic}
-                                        </SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            }
-                        />
-
-                        <Separator />
-
-                        <Row
-                            title={dict.settings.weekStartsOn}
-                            desc={dict.settings.weekStartsOnDesc}
+                            title="Week Starts On"
+                            desc="Select the first day of the week."
                             right={
                                 <Select
                                     value={merged.weekStartsOn}
@@ -272,16 +243,36 @@ export default function SettingsClient() {
                                         {WEEK_STARTS.map((w) => (
                                             <SelectItem key={w} value={w}>
                                                 {w === 'monday'
-                                                    ? dict.settings.monday
+                                                    ? 'Monday'
                                                     : w === 'sunday'
-                                                        ? dict.settings.sunday
-                                                        : dict.settings.saturday}
+                                                        ? 'Sunday'
+                                                        : 'Saturday'}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
                             }
                         />
+                    </CardContent>
+                </Card>
+
+                <Card className="rounded-2xl md:hidden">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-base">Account</CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="w-full"
+                            onClick={async () => {
+                                await authClient.signOut()
+                                router.push('/auth/sign-in')
+                            }}
+                        >
+                            <LogOut className="size-4" />
+                            Log out
+                        </Button>
                     </CardContent>
                 </Card>
             </div>
