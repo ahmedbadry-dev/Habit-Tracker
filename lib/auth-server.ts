@@ -11,4 +11,12 @@ export const {
 } = convexBetterAuthNextJs({
   convexUrl: process.env.NEXT_PUBLIC_CONVEX_URL!,
   convexSiteUrl: process.env.NEXT_PUBLIC_CONVEX_SITE_URL!,
+  jwtCache: {
+    enabled: true,
+    isAuthError: (error: unknown) => {
+      const message =
+        error instanceof Error ? error.message : String(error ?? "")
+      return /unauth|unauthorized|forbidden/i.test(message)
+    },
+  },
 })
