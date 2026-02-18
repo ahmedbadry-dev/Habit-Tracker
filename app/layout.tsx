@@ -7,6 +7,7 @@ import { getToken } from "@/lib/auth-server";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthGuardProvider } from "@/components/web/auth/AuthGuardProvider";
 import { AuthRequiredModal } from "@/components/web/auth/AuthRequiredModal";
+import { AppLanguageProvider } from "@/hooks/useAppLanguage";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -41,10 +42,12 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           <ConvexClientProvider initialToken={token}>
-            <AuthGuardProvider>
-              {children}
-              <AuthRequiredModal />
-            </AuthGuardProvider>
+            <AppLanguageProvider>
+              <AuthGuardProvider>
+                {children}
+                <AuthRequiredModal />
+              </AuthGuardProvider>
+            </AppLanguageProvider>
           </ConvexClientProvider>
           <Toaster richColors position="top-center" />
         </ThemeProvider>
