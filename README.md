@@ -59,15 +59,15 @@ Designed with maintainability in mind, this repository follows practical open-so
 ## Screenshots
 
 <p align="center">
-  <img src="./public/screenshots/dashboard.png" alt="Dashboard Screenshot" width="90%" />
+  <img src="./screenshots/dashboard.png" alt="Dashboard Screenshot" width="90%" />
 </p>
 
 <p align="center">
-  <img src="./public/screenshots/habit-details.png" alt="Habit Details Screenshot" width="44%" />
-  <img src="./public/screenshots/mobile-view.png" alt="Mobile Screenshot" width="44%" />
+  <img src="./screenshots/statistics.png" alt="Statistics Screenshot" width="44%" />
+  <img src="./screenshots/analytics.png" alt="Analytics Screenshot" width="44%" />
 </p>
 
-> Add your real screenshots at `public/screenshots/*` to showcase the UI.
+> Screenshots are loaded from `screenshots/*` in the repository root.
 
 ## Installation
 
